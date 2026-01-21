@@ -2,15 +2,6 @@
 
 A self-hostable "dead man's switch" application. Users create encrypted messages for recipients, and if they stop responding to periodic check-ins, the system automatically delivers those messages.
 
-## Features
-
-- **Magic link authentication** - No passwords, just email
-- **Client-side encryption** - Messages encrypted in the browser using libsodium (XChaCha20-Poly1305)
-- **Recipient key derivation** - Recipients derive keys from a passphrase using Argon2id
-- **Configurable check-in intervals** - Set your own schedule for check-ins
-- **Grace period & cooldown** - Multiple chances before delivery
-- **Trusted Contact** - Optional trusted person can confirm you're alive and delay delivery
-- **Panic revoke** - Cancel delivery during cooldown period
 
 ## Tech Stack
 
@@ -32,7 +23,7 @@ A self-hostable "dead man's switch" application. Users create encrypted messages
 ### 1. Clone and install dependencies
 
 ```bash
-cd lastsignal_app
+cd lastsignal
 bundle install
 ```
 
@@ -128,35 +119,33 @@ RAILS_ENV=production bin/rails db:prepare
 
 ### Environment Variables
 
-See `.env.example` for all available configuration options:
+All configuration lives in `.env.example`. Copy it to `.env` and edit values.
 
-- `APP_HOST` - Your domain (e.g., lastsignal.example.com)
+**Core**
+- `APP_BASE_URL` - Base URL for link generation
+- `APP_HOST` - Hostname for DNS rebinding protection and email links
 - `SECRET_KEY_BASE` - Generate with `bin/rails secret`
+- `RAILS_MASTER_KEY` - Production master key for credentials
+
+**Services**
 - `DATABASE_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
-- `SMTP_*` - Email configuration
+- `SMTP_*` - SMTP configuration for mail delivery
 
-## Architecture
+**Authentication**
+- `MAGIC_LINK_TTL_MINUTES` - Magic link expiration window
+- `ALLOWED_EMAILS` - Optional comma-separated allowlist for private instances
 
-### State Machine
+**Check-in Engine**
+- `CHECKIN_DEFAULT_*` - Defaults applied to new users
+- `CHECKIN_MIN_*` / `CHECKIN_MAX_*` - Bounds for user settings
 
-Users progress through states based on check-in behavior:
+**Security / Integrations**
+- `ARGON2ID_OPS_LIMIT`, `ARGON2ID_MEM_LIMIT` - Client-side KDF parameters
+- `EMAIL_WEBHOOK_SECRET` - Optional webhook authentication secret
 
-```
-active -> grace -> cooldown -> delivered
-   ^        |         |
-   |        v         v
-   +--- (check-in) ---+
-              |
-              v
-         (panic revoke)
-```
+Refer to `.env.example` for the full list and inline comments.
 
-### Encryption Flow
-
-1. **Recipient accepts invite**: Enters passphrase, Argon2id derives seed, X25519 keypair generated, public key stored
-2. **Sender creates message**: Content encrypted with XChaCha20-Poly1305, message key wrapped with recipient's public key
-3. **Delivery**: Recipient enters passphrase, regenerates keypair, unseals message key, decrypts content
 
 ## License
 

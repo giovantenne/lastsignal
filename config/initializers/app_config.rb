@@ -44,6 +44,23 @@ module AppConfig
       ENV.fetch("MAGIC_LINK_TTL_MINUTES", "15").to_i
     end
 
+    def allowed_emails
+      ENV.fetch("ALLOWED_EMAILS", "")
+        .split(",")
+        .map { |email| email.strip.downcase }
+        .reject(&:blank?)
+    end
+
+    def allowlist_enabled?
+      allowed_emails.any?
+    end
+
+    def allowlisted_email?(email)
+      return true unless allowlist_enabled?
+
+      allowed_emails.include?(email.to_s.strip.downcase)
+    end
+
     # Check-in defaults
     def checkin_default_interval_hours
       ENV.fetch("CHECKIN_DEFAULT_INTERVAL_HOURS", "168").to_i

@@ -12,6 +12,11 @@ class AuthController < ApplicationController
     email = params[:email]&.downcase&.strip
 
     if email.present? && email.match?(URI::MailTo::EMAIL_REGEXP)
+      unless AppConfig.allowlisted_email?(email)
+        flash[:alert] = "This instance is private. Your email isn't authorized."
+        return redirect_to login_path
+      end
+
       # Find or create user
       user = User.find_or_create_by!(email: email)
 
@@ -42,6 +47,11 @@ class AuthController < ApplicationController
     token = MagicLinkToken.find_and_verify(raw_token)
 
     if token
+      unless AppConfig.allowlisted_email?(token.user.email)
+        flash[:alert] = "This instance is private. Your email isn't authorized."
+        return redirect_to login_path
+      end
+
       # Mark token as used (single-use)
       token.mark_used!
 

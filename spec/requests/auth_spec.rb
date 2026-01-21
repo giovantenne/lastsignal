@@ -66,6 +66,41 @@ RSpec.describe "Auth", type: :request do
       end
     end
 
+    context "with allowlist enabled" do
+      around do |example|
+        original = ENV.fetch("ALLOWED_EMAILS", nil)
+        ENV["ALLOWED_EMAILS"] = "allowed@example.com,owner@example.com"
+        example.run
+      ensure
+        ENV["ALLOWED_EMAILS"] = original
+      end
+
+      it "blocks emails not on the list" do
+        expect {
+          post magic_link_path, params: { email: "blocked@example.com" }
+        }.not_to change(User, :count)
+
+        expect(MagicLinkToken.count).to eq(0)
+        expect(response).to redirect_to(login_path)
+        follow_redirect!
+        expect(response.body).to include("This instance is private")
+      end
+
+      it "allows emails on the list" do
+        expect {
+          post magic_link_path, params: { email: "allowed@example.com" }
+        }.to change(User, :count).by(1)
+      end
+
+      it "blocks existing users not on the list" do
+        create(:user, email: "blocked@example.com")
+
+        expect {
+          post magic_link_path, params: { email: "blocked@example.com" }
+        }.not_to change(MagicLinkToken, :count)
+      end
+    end
+
     context "with invalid email" do
       it "does not create user" do
         expect {
@@ -124,6 +159,33 @@ RSpec.describe "Auth", type: :request do
           get verify_magic_link_path(token: raw_token)
           expect(user.reload.last_checkin_confirmed_at).to eq(Time.current)
         end
+      end
+    end
+
+    context "with allowlist enabled" do
+      around do |example|
+        original = ENV.fetch("ALLOWED_EMAILS", nil)
+        ENV["ALLOWED_EMAILS"] = "allowed@example.com"
+        example.run
+      ensure
+        ENV["ALLOWED_EMAILS"] = original
+      end
+
+      it "blocks users not on the list" do
+        user.update!(email: "blocked@example.com")
+
+        get verify_magic_link_path(token: raw_token)
+        expect(session[:user_id]).to be_nil
+        expect(response).to redirect_to(login_path)
+        follow_redirect!
+        expect(response.body).to include("This instance is private")
+      end
+
+      it "allows users on the list" do
+        user.update!(email: "allowed@example.com")
+
+        get verify_magic_link_path(token: raw_token)
+        expect(session[:user_id]).to eq(user.id)
       end
     end
 
