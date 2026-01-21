@@ -27,7 +27,7 @@ A self-hostable "dead man's switch" application. Users create encrypted messages
 - Redis 7+
 - Node.js (for Tailwind)
 
-## Setup
+## Development Environment
 
 ### 1. Clone and install dependencies
 
@@ -43,14 +43,22 @@ cp .env.example .env
 # Edit .env with your values
 ```
 
-### 3. Setup database
+### 3. Run the setup script (recommended)
+
+```bash
+bin/setup
+```
+
+The setup script installs dependencies, prepares the database, and clears logs/tempfiles. It uses default values for `PGHOST`, `PGUSER`, and `PGPASSWORD` if not set.
+
+### 4. Setup database (manual)
 
 ```bash
 docker compose up -d db redis
 PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bin/rails db:setup
 ```
 
-## Development
+### Start the development stack
 
 Start everything with a single command using foreman:
 
@@ -66,7 +74,7 @@ This will automatically:
 
 Then open http://localhost:3000
 
-### Manual startup (alternative)
+#### Manual startup (alternative)
 
 If you prefer to start services separately:
 
@@ -81,7 +89,7 @@ PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bin/rails server
 PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bundle exec sidekiq
 ```
 
-## Running Tests
+## Test Environment
 
 Run all tests with:
 
@@ -110,6 +118,12 @@ cp .env.example .env
 # Configure production values in .env
 
 docker compose up --build
+```
+
+### Prepare the production database
+
+```bash
+RAILS_ENV=production bin/rails db:prepare
 ```
 
 ### Environment Variables

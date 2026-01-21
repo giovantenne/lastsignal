@@ -21,6 +21,9 @@ FileUtils.chdir APP_ROOT do
   # end
 
   puts "\n== Preparing database =="
+  ENV["PGHOST"] ||= "localhost"
+  ENV["PGUSER"] ||= "lastsignal"
+  ENV["PGPASSWORD"] ||= "lastsignal_dev"
   system! "bin/rails db:prepare"
 
   puts "\n== Removing old logs and tempfiles =="
