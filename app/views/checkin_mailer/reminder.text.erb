@@ -1,0 +1,17 @@
+Time to check in on <%= @app_name %>
+<%= "=" * 40 %>
+
+This is a friendly reminder to confirm you're still active on <%= @app_name %>.
+
+<% if @next_checkin_at %>
+Your check-in is due by: <%= @next_checkin_at.strftime("%B %d, %Y at %H:%M UTC") %>
+<% end %>
+
+Confirm your check-in here:
+<%= @checkin_url %>
+
+If you don't check in on time, you'll enter a grace period where we'll send you additional reminders. If you still don't respond, your messages will eventually be delivered to your recipients.
+
+---
+
+This is an automated message from <%= @app_name %>.

@@ -1,0 +1,79 @@
+# frozen_string_literal: true
+
+# Rate limiting configuration using Rack::Attack
+# https://github.com/rack/rack-attack
+
+class Rack::Attack
+  # Use Redis for caching if available, otherwise use Rails cache
+  Rack::Attack.cache.store = Rails.cache
+
+  # Throttle magic link requests by IP
+  throttle("magic_link/ip",
+    limit: AppConfig.rate_limit_magic_link_per_ip,
+    period: AppConfig.rate_limit_magic_link_period
+  ) do |req|
+    if req.path == "/auth/magic_link" && req.post?
+      req.ip
+    end
+  end
+
+  # Throttle magic link verification by IP
+  throttle("magic_link_verify/ip", limit: 10, period: 60) do |req|
+    if req.path.start_with?("/auth/verify") && req.get?
+      req.ip
+    end
+  end
+
+  # Throttle invite accept by IP
+  throttle("invite_accept/ip", limit: 10, period: 60) do |req|
+    if req.path.start_with?("/invites/") && req.post?
+      req.ip
+    end
+  end
+
+  # Throttle delivery page by IP
+  throttle("delivery/ip", limit: 30, period: 60) do |req|
+    if req.path.start_with?("/delivery/") && req.get?
+      req.ip
+    end
+  end
+
+  # Throttle trusted contact by IP
+  throttle("trusted_contact/ip", limit: 10, period: 60) do |req|
+    if req.path.start_with?("/trusted_contact/") && (req.get? || req.post?)
+      req.ip
+    end
+  end
+
+  # Throttle panic revoke by IP
+  throttle("panic_revoke/ip", limit: 5, period: 60) do |req|
+    if req.path.start_with?("/panic_revoke/") && (req.get? || req.post?)
+      req.ip
+    end
+  end
+
+  # Throttle emergency stop by IP (strict - potential brute force target)
+  throttle("emergency/ip", limit: 5, period: 300) do |req|
+    if req.path == "/emergency" && req.post?
+      req.ip
+    end
+  end
+
+  # Block suspicious requests
+  blocklist("block_bad_ips") do |req|
+    # Add known bad IPs here if needed
+    # Rack::Attack::Allow2Ban.filter(req.ip, maxretry: 10, findtime: 1.minute, bantime: 1.hour) do
+    #   req.path == "/auth/magic_link" && req.post?
+    # end
+    false
+  end
+
+  # Custom response for throttled requests
+  self.throttled_responder = lambda do |req|
+    [
+      429,
+      { "Content-Type" => "application/json" },
+      [{ error: "Rate limit exceeded. Please try again later." }.to_json]
+    ]
+  end
+end

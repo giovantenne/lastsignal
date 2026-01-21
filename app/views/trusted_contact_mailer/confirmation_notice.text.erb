@@ -1,0 +1,5 @@
+Trusted Contact confirmed you're okay
+
+<%= @contact.email %> confirmed that you're alive but temporarily unreachable.
+Message delivery is paused until <%= @paused_until&.strftime("%B %d, %Y at %H:%M UTC") %>.
+If another confirmation arrives, the pause will be extended.

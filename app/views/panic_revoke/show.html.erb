@@ -1,0 +1,45 @@
+<% content_for(:title) { "Panic Revoke - LastSignal" } %>
+
+<div class="max-w-xl mx-auto">
+  <div class="text-center mb-8">
+    <svg class="mx-auto h-16 w-16 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+    <h1 class="mt-4 text-2xl font-bold text-gray-900">Stop Message Delivery</h1>
+  </div>
+
+  <div class="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-red-800 mb-2">Your account is in cooldown</h2>
+    <p class="text-red-700">
+      Your messages are scheduled to be delivered to your recipients at:
+    </p>
+    <p class="text-xl font-bold text-red-900 my-4">
+      <%= @cooldown_ends_at&.strftime("%B %d, %Y at %H:%M UTC") || "Soon" %>
+    </p>
+    <p class="text-red-700">
+      If you click the button below, the delivery will be cancelled and your account will return to active status.
+    </p>
+  </div>
+
+  <%= form_with url: panic_revoke_path(token: @token), method: :post, class: "space-y-6" do |f| %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <p class="text-gray-700 mb-4">
+        By clicking the button below, you confirm that:
+      </p>
+      <ul class="list-disc list-inside text-gray-600 space-y-2">
+        <li>You are the account holder</li>
+        <li>You want to cancel the scheduled message delivery</li>
+        <li>You want to continue using LastSignal</li>
+      </ul>
+    </div>
+
+    <div class="flex flex-col space-y-4">
+      <%= f.submit "Yes, Cancel Delivery & Return to Active",
+          class: "w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer" %>
+      
+      <p class="text-center text-sm text-gray-500">
+        If you do nothing, your messages will be delivered as scheduled.
+      </p>
+    </div>
+  <% end %>
+</div>

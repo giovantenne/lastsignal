@@ -1,0 +1,218 @@
+<% content_for(:title) { "Account Settings - LastSignal" } %>
+
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-8">Account Settings</h1>
+
+  <!-- Account Info Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Account Information</h2>
+    
+    <dl class="space-y-4">
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Email</dt>
+        <dd class="text-sm text-gray-900"><%= @user.email %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Account created</dt>
+        <dd class="text-sm text-gray-900"><%= @user.created_at.strftime("%B %d, %Y") %></dd>
+      </div>
+      <div class="flex justify-between items-center">
+        <dt class="text-sm font-medium text-gray-500">Current status</dt>
+        <dd class="flex items-center gap-3">
+          <% status_colors = { "active" => "green", "grace" => "yellow", "cooldown" => "orange", "delivered" => "red", "paused" => "yellow" } %>
+          <% color = status_colors[@user.state] || "gray" %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-<%= color %>-100 text-<%= color %>-800">
+            <%= @user.state.capitalize %>
+          </span>
+
+          <% if @user.paused? %>
+            <%= form_with url: unpause_dashboard_path, method: :post, class: "inline" do |f| %>
+              <button type="submit" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200">
+                <svg class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                </svg>
+                Resume
+              </button>
+            <% end %>
+          <% elsif !@user.delivered? %>
+            <%= form_with url: pause_dashboard_path, method: :post, class: "inline" do |f| %>
+              <button type="submit" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                      onclick="return confirm('Pause check-ins? No reminders will be sent and no messages will be delivered until you resume.')">
+                <svg class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Pause
+              </button>
+            <% end %>
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Check-in Settings Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-medium text-gray-900">Check-in Settings</h2>
+      <%= link_to "Edit", edit_account_path, class: "text-sm text-blue-600 hover:text-blue-800" %>
+    </div>
+
+    <dl class="space-y-4">
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Check-in interval</dt>
+        <dd class="mt-1 text-sm text-gray-900">
+          Every <strong><%= @user.effective_checkin_interval_hours %> hours</strong>
+          (<%= (@user.effective_checkin_interval_hours / 24.0).round(1) %> days)
+          <% unless @user.checkin_interval_hours %>
+            <span class="text-gray-400">(default)</span>
+          <% end %>
+        </dd>
+        <dd class="mt-1 text-xs text-gray-500">
+          How often you need to confirm you're still active.
+        </dd>
+      </div>
+
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Grace period</dt>
+        <dd class="mt-1 text-sm text-gray-900">
+          <strong><%= @user.effective_grace_period_hours %> hours</strong>
+          (<%= (@user.effective_grace_period_hours / 24.0).round(1) %> days)
+          <% unless @user.grace_period_hours %>
+            <span class="text-gray-400">(default)</span>
+          <% end %>
+        </dd>
+        <dd class="mt-1 text-xs text-gray-500">
+          Time after a missed check-in before entering cooldown. You'll receive reminders.
+        </dd>
+      </div>
+
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Cooldown period</dt>
+        <dd class="mt-1 text-sm text-gray-900">
+          <strong><%= @user.effective_cooldown_period_hours %> hours</strong>
+          (<%= (@user.effective_cooldown_period_hours / 24.0).round(1) %> days)
+          <% unless @user.cooldown_period_hours %>
+            <span class="text-gray-400">(default)</span>
+          <% end %>
+        </dd>
+        <dd class="mt-1 text-xs text-gray-500">
+          Final warning period before messages are delivered to recipients.
+        </dd>
+      </div>
+
+      <% if @user.paused? %>
+        <div class="pt-4 border-t border-gray-200">
+          <dt class="text-sm font-medium text-gray-500">Next check-in due</dt>
+          <dd class="mt-1 text-sm text-yellow-600">
+            Check-ins are paused
+          </dd>
+        </div>
+      <% elsif @user.next_checkin_at %>
+        <div class="pt-4 border-t border-gray-200">
+          <dt class="text-sm font-medium text-gray-500">Next check-in due</dt>
+          <dd class="mt-1 text-sm text-gray-900">
+            <%= @user.next_checkin_at.strftime("%B %d, %Y at %H:%M UTC") %>
+            <% if @user.next_checkin_at > Time.current %>
+              <span class="text-green-600">(in <%= distance_of_time_in_words(Time.current, @user.next_checkin_at) %>)</span>
+            <% else %>
+              <span class="text-red-600">(overdue by <%= distance_of_time_in_words(@user.next_checkin_at, Time.current) %>)</span>
+            <% end %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <!-- Trusted Contact Summary -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-medium text-gray-900">Trusted Contact</h2>
+      <%= link_to "Edit", edit_account_path, class: "text-sm text-blue-600 hover:text-blue-800" %>
+    </div>
+
+    <% if @user.trusted_contact.present? %>
+      <dl class="space-y-4">
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Name</dt>
+          <dd class="text-sm text-gray-900"><%= @user.trusted_contact.name.presence || "Not specified" %></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Email</dt>
+          <dd class="text-sm text-gray-900"><%= @user.trusted_contact.email %></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Ping interval</dt>
+          <dd class="text-sm text-gray-900">
+            Every <strong><%= @user.trusted_contact.effective_ping_interval_hours %> hours</strong>
+            (<%= (@user.trusted_contact.effective_ping_interval_hours / 24.0).round(1) %> days)
+          </dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Pause duration</dt>
+          <dd class="text-sm text-gray-900">
+            <strong><%= @user.trusted_contact.effective_pause_duration_hours %> hours</strong>
+            (<%= (@user.trusted_contact.effective_pause_duration_hours / 24.0).round(1) %> days) per confirmation
+          </dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Last confirmation</dt>
+          <dd class="text-sm text-gray-900">
+            <%= @user.trusted_contact.last_confirmed_at ? @user.trusted_contact.last_confirmed_at.strftime("%B %d, %Y at %H:%M UTC") : "None yet" %>
+          </dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Delivery pause</dt>
+          <dd class="text-sm text-gray-900">
+            <% if @user.trusted_contact.pause_active? %>
+              Paused until <strong><%= @user.trusted_contact.paused_until.strftime("%B %d, %Y at %H:%M UTC") %></strong>
+            <% else %>
+              Not active
+            <% end %>
+          </dd>
+        </div>
+      </dl>
+    <% else %>
+      <p class="text-sm text-gray-600">
+        No trusted contact configured. Add one to let a trusted person confirm you're alive but unreachable during grace or cooldown.
+      </p>
+    <% end %>
+  </div>
+
+  <!-- Emergency Recovery Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Emergency Recovery</h2>
+    
+    <p class="text-sm text-gray-600 mb-4">
+      Your recovery code allows you to stop message delivery <strong>without email access</strong>.
+      Use it at <code class="bg-gray-100 px-1 rounded">/emergency</code> if you lose access to your email.
+    </p>
+
+    <% if @user.recovery_code_viewed? %>
+      <p class="text-sm text-gray-500 mb-4">
+        Recovery code last saved: <%= @user.recovery_code_viewed_at.strftime("%B %d, %Y") %>
+      </p>
+    <% else %>
+      <p class="text-sm text-yellow-700 bg-yellow-50 p-3 rounded mb-4">
+        You haven't saved your recovery code yet. Generate one now.
+      </p>
+    <% end %>
+
+    <%= button_to "Generate New Recovery Code", regenerate_recovery_code_account_path,
+        method: :post,
+        data: { turbo_confirm: "This will invalidate your current recovery code. Continue?" },
+        class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+    <h2 class="text-lg font-medium text-red-900 mb-4">Danger Zone</h2>
+    <p class="text-sm text-red-700 mb-4">
+      Deleting your account will permanently remove all your messages, recipients, and settings. 
+      This action cannot be undone.
+    </p>
+    <%= button_to "Delete Account", account_path, 
+        method: :delete,
+        data: { turbo_confirm: "Are you sure you want to delete your account? This cannot be undone." },
+        class: "inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" %>
+  </div>
+</div>

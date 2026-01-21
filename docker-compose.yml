@@ -1,0 +1,141 @@
+# LastSignal Docker Compose Configuration
+# =========================================
+# Usage:
+#   Development: docker compose up
+#   Production:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Before first run:
+#   1. Copy .env.example to .env and configure
+#   2. Generate RAILS_MASTER_KEY: docker compose run --rm web bin/rails credentials:edit
+#
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lastsignal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lastsignal_dev}
+      POSTGRES_DB: lastsignal_app_production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lastsignal -d lastsignal_app_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  # Redis (for Sidekiq and caching)
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+
+  # Rails Web Server
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:-dummy_key_for_dev}
+      DATABASE_URL: postgres://lastsignal:${POSTGRES_PASSWORD:-lastsignal_dev}@db:5432/lastsignal_app_production
+      REDIS_URL: redis://redis:6379/0
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      # SMTP Configuration
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_DOMAIN: ${SMTP_DOMAIN:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@localhost}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-LastSignal}
+      # Check-in settings
+      CHECKIN_DEFAULT_INTERVAL_HOURS: ${CHECKIN_DEFAULT_INTERVAL_HOURS:-168}
+      CHECKIN_DEFAULT_GRACE_HOURS: ${CHECKIN_DEFAULT_GRACE_HOURS:-72}
+      CHECKIN_DEFAULT_COOLDOWN_HOURS: ${CHECKIN_DEFAULT_COOLDOWN_HOURS:-48}
+      CHECKIN_MIN_INTERVAL_HOURS: ${CHECKIN_MIN_INTERVAL_HOURS:-24}
+      CHECKIN_MIN_GRACE_HOURS: ${CHECKIN_MIN_GRACE_HOURS:-24}
+      CHECKIN_MIN_COOLDOWN_HOURS: ${CHECKIN_MIN_COOLDOWN_HOURS:-24}
+      CHECKIN_MAX_INTERVAL_HOURS: ${CHECKIN_MAX_INTERVAL_HOURS:-8760}
+      CHECKIN_MAX_GRACE_HOURS: ${CHECKIN_MAX_GRACE_HOURS:-720}
+      CHECKIN_MAX_COOLDOWN_HOURS: ${CHECKIN_MAX_COOLDOWN_HOURS:-720}
+      # Auth
+      MAGIC_LINK_TTL_MINUTES: ${MAGIC_LINK_TTL_MINUTES:-15}
+      INVITE_TOKEN_TTL_DAYS: ${INVITE_TOKEN_TTL_DAYS:-7}
+      # Webhook
+      EMAIL_WEBHOOK_SECRET: ${EMAIL_WEBHOOK_SECRET:-}
+      # Crypto
+      ARGON2ID_OPS_LIMIT: ${ARGON2ID_OPS_LIMIT:-3}
+      ARGON2ID_MEM_LIMIT: ${ARGON2ID_MEM_LIMIT:-268435456}
+    ports:
+      - "3000:80"
+    volumes:
+      - rails_storage:/rails/storage
+
+  # Sidekiq Background Worker
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:-dummy_key_for_dev}
+      DATABASE_URL: postgres://lastsignal:${POSTGRES_PASSWORD:-lastsignal_dev}@db:5432/lastsignal_app_production
+      REDIS_URL: redis://redis:6379/0
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      # SMTP Configuration
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_DOMAIN: ${SMTP_DOMAIN:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@localhost}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-LastSignal}
+      # Check-in settings
+      CHECKIN_DEFAULT_INTERVAL_HOURS: ${CHECKIN_DEFAULT_INTERVAL_HOURS:-168}
+      CHECKIN_DEFAULT_GRACE_HOURS: ${CHECKIN_DEFAULT_GRACE_HOURS:-72}
+      CHECKIN_DEFAULT_COOLDOWN_HOURS: ${CHECKIN_DEFAULT_COOLDOWN_HOURS:-48}
+      CHECKIN_MIN_INTERVAL_HOURS: ${CHECKIN_MIN_INTERVAL_HOURS:-24}
+      CHECKIN_MIN_GRACE_HOURS: ${CHECKIN_MIN_GRACE_HOURS:-24}
+      CHECKIN_MIN_COOLDOWN_HOURS: ${CHECKIN_MIN_COOLDOWN_HOURS:-24}
+      CHECKIN_MAX_INTERVAL_HOURS: ${CHECKIN_MAX_INTERVAL_HOURS:-8760}
+      CHECKIN_MAX_GRACE_HOURS: ${CHECKIN_MAX_GRACE_HOURS:-720}
+      CHECKIN_MAX_COOLDOWN_HOURS: ${CHECKIN_MAX_COOLDOWN_HOURS:-720}
+      # Auth
+      MAGIC_LINK_TTL_MINUTES: ${MAGIC_LINK_TTL_MINUTES:-15}
+      INVITE_TOKEN_TTL_DAYS: ${INVITE_TOKEN_TTL_DAYS:-7}
+      # Webhook
+      EMAIL_WEBHOOK_SECRET: ${EMAIL_WEBHOOK_SECRET:-}
+    command: bundle exec sidekiq
+    volumes:
+      - rails_storage:/rails/storage
+
+volumes:
+  postgres_data:
+  redis_data:
+  rails_storage:

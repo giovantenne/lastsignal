@@ -1,0 +1,18 @@
+You have <%= @messages_count %> message<%= 's' if @messages_count > 1 %> waiting on <%= @app_name %>
+<%= "=" * 50 %>
+
+<%= @sender.email %> prepared encrypted message<%= 's' if @messages_count > 1 %> for you on <%= @app_name %>. These message<%= 's' if @messages_count > 1 %> <%= @messages_count > 1 ? 'have' : 'has' %> now been delivered.
+
+Read your message<%= 's' if @messages_count > 1 %> here:
+<%= @delivery_url %>
+
+---
+
+YOU'LL NEED YOUR PASSPHRASE
+To decrypt and read <%= @messages_count > 1 ? 'these messages' : 'this message' %>, you'll need to enter the passphrase you created when you first set up your account. If you've forgotten your passphrase, the message<%= 's' if @messages_count > 1 %> cannot be recovered.
+
+---
+
+This is an automated message from <%= @app_name %>. Please do not reply to this email.
+
+This link will remain active so you can access your message<%= 's' if @messages_count > 1 %> at any time.

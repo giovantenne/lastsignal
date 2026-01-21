@@ -1,0 +1,127 @@
+<script type="module" nonce="<%= request.content_security_policy_nonce %>">
+  // Use sumo version for full crypto support including Argon2
+  import sodium from 'libsodium-wrappers-sumo';
+
+  async function handleEncryptAndSave() {
+    const plaintext = document.getElementById('plaintext').value;
+    const label = document.getElementById('label').value;
+    const checkboxes = document.querySelectorAll('.recipient-checkbox:checked');
+    const errorEl = document.getElementById('error-message');
+    const statusEl = document.getElementById('status-message');
+    const statusText = document.getElementById('status-text');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Reset error state
+    errorEl.classList.add('hidden');
+
+    // Validate
+    if (!plaintext.trim()) {
+      errorEl.textContent = 'Please enter a message.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    if (checkboxes.length === 0) {
+      errorEl.textContent = 'Please select at least one recipient.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    // Show loading
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-50');
+    statusEl.classList.remove('hidden');
+
+    try {
+      // Initialize sodium
+      await sodium.ready;
+
+      statusText.textContent = 'Generating encryption key...';
+
+      // Generate random message key (32 bytes)
+      const msgKey = sodium.randombytes_buf(32);
+      
+      // Generate nonce (24 bytes for XChaCha20-Poly1305)
+      const nonce = sodium.randombytes_buf(24);
+
+      statusText.textContent = 'Encrypting message...';
+
+      // Encrypt the message with XChaCha20-Poly1305
+      const plaintextBytes = sodium.from_string(plaintext);
+      const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+        plaintextBytes,
+        null, // additional data (AAD)
+        null, // nsec (unused, must be null)
+        nonce,
+        msgKey
+      );
+
+      // Encode ciphertext and nonce as base64url
+      const ciphertextB64u = sodium.to_base64(ciphertext, sodium.base64_variants.URLSAFE_NO_PADDING);
+      const nonceB64u = sodium.to_base64(nonce, sodium.base64_variants.URLSAFE_NO_PADDING);
+
+      statusText.textContent = 'Wrapping keys for recipients...';
+
+      // Wrap the message key for each recipient using sealed boxes
+      const recipientEnvelopes = [];
+      
+      for (const checkbox of checkboxes) {
+        const recipientId = checkbox.value;
+        const publicKeyB64u = checkbox.dataset.publicKey;
+        
+        // Decode recipient's public key
+        const publicKey = sodium.from_base64(publicKeyB64u, sodium.base64_variants.URLSAFE_NO_PADDING);
+        
+        // Seal the message key with recipient's public key
+        const encryptedMsgKey = sodium.crypto_box_seal(msgKey, publicKey);
+        const encryptedMsgKeyB64u = sodium.to_base64(encryptedMsgKey, sodium.base64_variants.URLSAFE_NO_PADDING);
+        
+        recipientEnvelopes.push({
+          recipient_id: recipientId,
+          encrypted_msg_key_b64u: encryptedMsgKeyB64u,
+          envelope_algo: 'crypto_box_seal',
+          envelope_version: 1
+        });
+      }
+
+      statusText.textContent = 'Saving encrypted message...';
+
+      // Send to server
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      
+      const response = await fetch('<%= action_url %>', {
+        method: '<%= method %>',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          label: label,
+          ciphertext_b64u: ciphertextB64u,
+          nonce_b64u: nonceB64u,
+          recipient_envelopes: recipientEnvelopes
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Redirect to messages list
+        window.location.href = result.redirect_url || '/messages';
+      } else {
+        throw new Error(result.error || 'Failed to save message');
+      }
+
+    } catch (error) {
+      console.error('Encryption error:', error);
+      errorEl.textContent = error.message || 'An error occurred. Please try again.';
+      errorEl.classList.remove('hidden');
+      statusEl.classList.add('hidden');
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50');
+    }
+  }
+
+  // Attach event listener when DOM is ready
+  document.getElementById('submit-btn').addEventListener('click', handleEncryptAndSave);
+</script>

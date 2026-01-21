@@ -1,0 +1,138 @@
+<% content_for(:title) { "#{@recipient.display_name} - Recipients - LastSignal" } %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <nav class="text-sm text-gray-500 mb-2">
+        <%= link_to "Recipients", recipients_path, class: "hover:text-gray-700" %> /
+      </nav>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @recipient.display_name %></h1>
+    </div>
+    <div class="flex items-center space-x-4">
+      <% if @recipient.invited? %>
+        <%= button_to "Resend Invite", resend_invite_recipient_path(@recipient),
+            method: :post,
+            class: "text-sm text-blue-600 hover:text-blue-800" %>
+      <% end %>
+      <%= button_to "Remove", recipient_path(@recipient),
+          method: :delete,
+          data: { turbo_confirm: "Remove #{@recipient.display_name}? They will no longer receive your messages." },
+          class: "text-sm text-red-600 hover:text-red-800" %>
+    </div>
+  </div>
+
+  <!-- Status Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Status</h2>
+    
+    <dl class="space-y-4">
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Email</dt>
+        <dd class="text-sm text-gray-900"><%= @recipient.email %></dd>
+      </div>
+
+      <% if @recipient.name.present? %>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Name</dt>
+          <dd class="text-sm text-gray-900"><%= @recipient.name %></dd>
+        </div>
+      <% end %>
+
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Status</dt>
+        <dd>
+          <% if @recipient.accepted? %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Accepted
+            </span>
+          <% else %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              Pending Invite
+            </span>
+          <% end %>
+        </dd>
+      </div>
+
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Added</dt>
+        <dd class="text-sm text-gray-900"><%= @recipient.created_at.strftime("%B %d, %Y at %H:%M UTC") %></dd>
+      </div>
+
+      <% if @recipient.accepted? && @recipient.accepted_at %>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Accepted</dt>
+          <dd class="text-sm text-gray-900"><%= @recipient.accepted_at.strftime("%B %d, %Y at %H:%M UTC") %></dd>
+        </div>
+      <% end %>
+
+      <% if @recipient.invited? && @recipient.invite_expires_at %>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Invite expires</dt>
+          <dd class="text-sm text-gray-900">
+            <%= @recipient.invite_expires_at.strftime("%B %d, %Y at %H:%M UTC") %>
+            <% if @recipient.invite_expires_at < Time.current %>
+              <span class="text-red-500 text-xs">(expired - resend invite)</span>
+            <% else %>
+              <span class="text-gray-400 text-xs">(in <%= distance_of_time_in_words(Time.current, @recipient.invite_expires_at) %>)</span>
+            <% end %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <!-- Key Info (if accepted) -->
+  <% if @recipient.accepted? && @recipient.recipient_key %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Encryption Key</h2>
+      
+      <dl class="space-y-4">
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Key version</dt>
+          <dd class="text-sm text-gray-900">v<%= @recipient.recipient_key.key_version %></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Registered</dt>
+          <dd class="text-sm text-gray-900"><%= @recipient.recipient_key.created_at.strftime("%B %d, %Y") %></dd>
+        </div>
+      </dl>
+
+      <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+        <p class="text-sm text-green-700">
+          This recipient can receive encrypted messages. Their public key is stored securely.
+        </p>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Messages assigned to this recipient -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Messages</h2>
+    
+    <% if @recipient.messages.any? %>
+      <ul class="divide-y divide-gray-200">
+        <% @recipient.messages.each do |message| %>
+          <li class="py-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-900">
+                  <%= message.label.presence || "Untitled Message" %>
+                </p>
+                <p class="text-xs text-gray-500">Created <%= message.created_at.strftime("%B %d, %Y") %></p>
+              </div>
+              <%= link_to "View", message_path(message), class: "text-sm text-blue-600 hover:text-blue-800" %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-gray-500">
+        <% if @recipient.accepted? %>
+          No messages assigned yet. <%= link_to "Create a message", new_message_path, class: "text-blue-600 hover:text-blue-800" %> for this recipient.
+        <% else %>
+          This recipient needs to accept their invite before they can receive messages.
+        <% end %>
+      </p>
+    <% end %>
+  </div>
+</div>

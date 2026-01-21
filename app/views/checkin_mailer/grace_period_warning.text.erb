@@ -1,0 +1,17 @@
+You missed your check-in on <%= @app_name %>
+<%= "=" * 40 %>
+
+You've entered the GRACE PERIOD on <%= @app_name %> because you missed your scheduled check-in.
+
+Grace period ends: <%= @grace_ends_at&.strftime("%B %d, %Y at %H:%M UTC") || "Soon" %>
+
+Log in to check in:
+<%= @login_url %>
+
+If you don't check in before the grace period ends, you'll enter a final cooldown period. After that, your encrypted messages will be delivered to your recipients.
+
+If this is intentional and you want your messages delivered, you don't need to do anything.
+
+---
+
+This is an automated message from <%= @app_name %>.

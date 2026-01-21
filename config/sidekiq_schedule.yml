@@ -1,0 +1,9 @@
+# Sidekiq Cron Schedule
+# See: https://github.com/sidekiq-cron/sidekiq-cron
+
+# Process check-ins every 5 minutes
+process_checkins:
+  cron: "*/5 * * * *"
+  class: "ProcessCheckinsJob"
+  queue: default
+  description: "Process user check-ins and state transitions"

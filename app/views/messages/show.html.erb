@@ -1,0 +1,105 @@
+<% content_for(:title) { "#{@message.label.presence || 'Untitled Message'} - Messages - LastSignal" } %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <nav class="text-sm text-gray-500 mb-2">
+        <%= link_to "Messages", messages_path, class: "hover:text-gray-700" %> /
+      </nav>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @message.label.presence || "Untitled Message" %></h1>
+    </div>
+    <div class="flex items-center space-x-4">
+      <%= link_to "Edit", edit_message_path(@message), class: "text-sm text-blue-600 hover:text-blue-800" %>
+      <%= button_to "Delete", message_path(@message),
+          method: :delete,
+          data: { turbo_confirm: "Delete this message? This cannot be undone." },
+          class: "text-sm text-red-600 hover:text-red-800" %>
+    </div>
+  </div>
+
+  <!-- Message Details -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Details</h2>
+    
+    <dl class="space-y-4">
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Created</dt>
+        <dd class="text-sm text-gray-900"><%= @message.created_at.strftime("%B %d, %Y at %H:%M UTC") %></dd>
+      </div>
+
+      <% if @message.updated_at > @message.created_at + 1.minute %>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Last updated</dt>
+          <dd class="text-sm text-gray-900"><%= @message.updated_at.strftime("%B %d, %Y at %H:%M UTC") %></dd>
+        </div>
+      <% end %>
+
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Encryption</dt>
+        <dd class="text-sm text-gray-900">
+          <%= @message.aead_algo %> (v<%= @message.payload_version %>)
+        </dd>
+      </div>
+
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Payload size</dt>
+        <dd class="text-sm text-gray-900">
+          <%= number_to_human_size(@message.ciphertext_b64u.bytesize) %> (encrypted)
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Encrypted Content Notice -->
+  <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+    <div class="flex items-center space-x-3">
+      <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+      <div>
+        <h3 class="text-sm font-medium text-gray-900">Content is encrypted</h3>
+        <p class="text-sm text-gray-500">
+          The message content is encrypted and cannot be displayed. Only your recipients can 
+          decrypt it using their passphrase when the message is delivered.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipients -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">
+      Recipients (<%= @recipients.count %>)
+    </h2>
+    
+    <% if @recipients.any? %>
+      <ul class="divide-y divide-gray-200">
+        <% @recipients.each do |mr| %>
+          <li class="py-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-900"><%= mr.recipient.display_name %></p>
+              <p class="text-xs text-gray-500"><%= mr.recipient.email %></p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">
+                <%= mr.envelope_algo %> v<%= mr.envelope_version %>
+              </span>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-gray-500">No recipients assigned to this message.</p>
+    <% end %>
+  </div>
+
+  <!-- Delivery Status (if delivered) -->
+  <% if current_user.delivered? %>
+    <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+      <h3 class="text-sm font-medium text-green-800">Message delivered</h3>
+      <p class="mt-1 text-sm text-green-700">
+        This message has been delivered to recipients. They can access it using their delivery links.
+      </p>
+    </div>
+  <% end %>
+</div>

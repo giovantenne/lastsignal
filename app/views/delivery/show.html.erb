@@ -1,0 +1,255 @@
+<% content_for(:title) { "Your Messages - LastSignal" } %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="text-center mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">You Have Messages</h1>
+    <p class="mt-2 text-gray-600">
+      From: <strong><%= @sender.email %></strong>
+    </p>
+  </div>
+
+  <!-- Passphrase Form -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div id="decrypt-form">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Enter Your Passphrase</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        To read your messages, enter the passphrase you created when you first set up your account.
+        Your passphrase never leaves your browser.
+      </p>
+
+      <div class="space-y-4">
+        <div>
+          <label for="passphrase" class="block text-sm font-medium text-gray-700">
+            Passphrase
+          </label>
+          <input type="password" 
+                 id="passphrase" 
+                 name="passphrase"
+                 required
+                 autocomplete="current-password"
+                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                 placeholder="Enter your passphrase">
+        </div>
+
+        <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+        </div>
+
+        <div id="status-message" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+          <div class="flex items-center">
+            <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="status-text">Decrypting messages...</span>
+          </div>
+        </div>
+
+        <button type="button"
+                id="decrypt-btn"
+                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          Decrypt Messages
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decrypted Messages (hidden initially) -->
+  <div id="messages-container" class="hidden space-y-6">
+    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+      <div class="flex items-center">
+        <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm font-medium text-green-800">Messages decrypted successfully</span>
+      </div>
+    </div>
+
+    <div id="messages-list">
+      <!-- Messages will be inserted here by JavaScript -->
+    </div>
+  </div>
+
+  <!-- Security Notice -->
+  <div class="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-4">
+    <h3 class="text-sm font-medium text-gray-800">Security information</h3>
+    <ul class="mt-2 text-sm text-gray-600 list-disc list-inside space-y-1">
+      <li>Your passphrase is never sent to our server</li>
+      <li>Decryption happens entirely in your browser</li>
+      <li>You can access this page again using the same link</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Hidden data for JS -->
+<script id="delivery-data" type="application/json">
+  {
+    "token": "<%= params[:token] %>",
+    "payloadUrl": "<%= delivery_payload_path(token: params[:token]) %>"
+  }
+</script>
+
+<script type="module" nonce="<%= request.content_security_policy_nonce %>">
+  // Use sumo version for crypto_pwhash (Argon2) support
+  import sodium from 'libsodium-wrappers-sumo';
+
+  async function handleDecrypt() {
+    const passphrase = document.getElementById('passphrase').value;
+    const errorEl = document.getElementById('error-message');
+    const statusEl = document.getElementById('status-message');
+    const statusText = document.getElementById('status-text');
+    const decryptBtn = document.getElementById('decrypt-btn');
+    const decryptForm = document.getElementById('decrypt-form');
+    const messagesContainer = document.getElementById('messages-container');
+    const messagesList = document.getElementById('messages-list');
+
+    // Reset error state
+    errorEl.classList.add('hidden');
+
+    if (!passphrase) {
+      errorEl.textContent = 'Please enter your passphrase.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    // Show loading
+    decryptBtn.disabled = true;
+    decryptBtn.classList.add('opacity-50');
+    statusEl.classList.remove('hidden');
+
+    try {
+      // Initialize sodium
+      await sodium.ready;
+
+      // Get delivery data
+      const deliveryData = JSON.parse(document.getElementById('delivery-data').textContent);
+
+      statusText.textContent = 'Fetching encrypted messages...';
+
+      // Fetch encrypted payloads
+      const response = await fetch(deliveryData.payloadUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+
+      const data = await response.json();
+
+      statusText.textContent = 'Deriving encryption key...';
+
+      // Decrypt each message
+      const decryptedMessages = [];
+
+      for (const msg of data.messages) {
+        try {
+          // Decode salt
+          const kdfSalt = sodium.from_base64(msg.kdf_salt_b64u, sodium.base64_variants.URLSAFE_NO_PADDING);
+
+          // Derive seed using Argon2id
+          const seed = sodium.crypto_pwhash(
+            32,
+            passphrase,
+            kdfSalt,
+            msg.kdf_params.opslimit,
+            msg.kdf_params.memlimit,
+            sodium.crypto_pwhash_ALG_ARGON2ID13
+          );
+
+          // Generate keypair from seed
+          const keypair = sodium.crypto_box_seed_keypair(seed);
+
+          statusText.textContent = `Decrypting message ${decryptedMessages.length + 1}...`;
+
+          // Decode encrypted message key
+          const encryptedMsgKey = sodium.from_base64(msg.encrypted_msg_key_b64u, sodium.base64_variants.URLSAFE_NO_PADDING);
+
+          // Unseal the message key
+          const msgKey = sodium.crypto_box_seal_open(encryptedMsgKey, keypair.publicKey, keypair.privateKey);
+
+          // Decode ciphertext and nonce
+          const ciphertext = sodium.from_base64(msg.ciphertext_b64u, sodium.base64_variants.URLSAFE_NO_PADDING);
+          const nonce = sodium.from_base64(msg.nonce_b64u, sodium.base64_variants.URLSAFE_NO_PADDING);
+
+          // Decrypt the message
+          const plaintext = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+            null, // nsec (unused)
+            ciphertext,
+            null, // additional data
+            nonce,
+            msgKey
+          );
+
+          decryptedMessages.push({
+            label: msg.label,
+            created_at: msg.created_at,
+            plaintext: sodium.to_string(plaintext)
+          });
+        } catch (e) {
+          console.error('Failed to decrypt message:', e);
+          decryptedMessages.push({
+            label: msg.label,
+            created_at: msg.created_at,
+            error: 'Failed to decrypt. Passphrase may be incorrect.'
+          });
+        }
+      }
+
+      // Check if any messages decrypted successfully
+      const successCount = decryptedMessages.filter(m => !m.error).length;
+      if (successCount === 0) {
+        throw new Error('Could not decrypt any messages. Please check your passphrase.');
+      }
+
+      // Display decrypted messages
+      messagesList.innerHTML = '';
+      
+      for (const msg of decryptedMessages) {
+        const messageEl = document.createElement('div');
+        messageEl.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6';
+        
+        if (msg.error) {
+          messageEl.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium text-gray-900">${msg.label || 'Untitled Message'}</h3>
+              <span class="text-xs text-gray-500">${new Date(msg.created_at).toLocaleDateString()}</span>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
+              ${msg.error}
+            </div>
+          `;
+        } else {
+          messageEl.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium text-gray-900">${msg.label || 'Untitled Message'}</h3>
+              <span class="text-xs text-gray-500">${new Date(msg.created_at).toLocaleDateString()}</span>
+            </div>
+            <div class="prose prose-sm max-w-none">
+              <pre class="whitespace-pre-wrap font-sans text-gray-700 bg-gray-50 rounded p-4">${escapeHtml(msg.plaintext)}</pre>
+            </div>
+          `;
+        }
+        
+        messagesList.appendChild(messageEl);
+      }
+
+      // Show messages, hide form
+      decryptForm.classList.add('hidden');
+      messagesContainer.classList.remove('hidden');
+
+    } catch (error) {
+      console.error('Decryption error:', error);
+      errorEl.textContent = error.message || 'Failed to decrypt. Please check your passphrase.';
+      errorEl.classList.remove('hidden');
+      statusEl.classList.add('hidden');
+      decryptBtn.disabled = false;
+      decryptBtn.classList.remove('opacity-50');
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Attach event listener when DOM is ready
+  document.getElementById('decrypt-btn').addEventListener('click', handleDecrypt);
+</script>

@@ -1,0 +1,206 @@
+<% content_for(:title) { "Accept Invite - LastSignal" } %>
+
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">Set Up Your Encryption Key</h1>
+  <p class="text-gray-600 mb-8">
+    <strong><%= @sender_email %></strong> has added you as a recipient on LastSignal.
+  </p>
+
+  <!-- What is LastSignal -->
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <h3 class="text-sm font-medium text-blue-800">What is LastSignal?</h3>
+    <p class="mt-1 text-sm text-blue-700">
+      LastSignal is a "dead man's switch" service. If the sender stops checking in regularly, 
+      encrypted messages they've prepared will be automatically delivered to you. You'll need 
+      your passphrase to decrypt and read these messages.
+    </p>
+  </div>
+
+  <!-- Passphrase Form -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div id="invite-form">
+      <div class="space-y-6">
+        <div>
+          <label for="passphrase" class="block text-sm font-medium text-gray-700">
+            Create Your Passphrase
+          </label>
+          <input type="password" 
+                 id="passphrase" 
+                 name="passphrase"
+                 required
+                 minlength="12"
+                 autocomplete="new-password"
+                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                 placeholder="Enter a strong passphrase (min 12 characters)">
+          <p class="mt-1 text-xs text-gray-500">
+            Use a mix of words, numbers, and symbols. This passphrase is <strong>never sent to our server</strong>.
+          </p>
+        </div>
+
+        <div>
+          <label for="passphrase-confirm" class="block text-sm font-medium text-gray-700">
+            Confirm Passphrase
+          </label>
+          <input type="password" 
+                 id="passphrase-confirm" 
+                 name="passphrase_confirm"
+                 required
+                 minlength="12"
+                 autocomplete="new-password"
+                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                 placeholder="Confirm your passphrase">
+        </div>
+
+        <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+        </div>
+
+        <div id="status-message" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+          <div class="flex items-center">
+            <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="status-text">Generating encryption key...</span>
+          </div>
+        </div>
+
+        <button type="button"
+                id="submit-btn"
+                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          Generate Encryption Key
+        </button>
+      </div>
+    </div>
+
+    <div id="success-message" class="hidden text-center py-8">
+      <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3 class="mt-4 text-lg font-medium text-gray-900">You're all set!</h3>
+      <p class="mt-2 text-sm text-gray-500">
+        Your encryption key has been registered. When messages are delivered, you'll receive an email 
+        with a link to decrypt them using your passphrase.
+      </p>
+    </div>
+  </div>
+
+  <!-- Warning -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+    <h3 class="text-sm font-medium text-yellow-800">Important: Remember your passphrase!</h3>
+    <ul class="mt-2 text-sm text-yellow-700 list-disc list-inside space-y-1">
+      <li>Your passphrase is the <strong>only way</strong> to decrypt messages sent to you</li>
+      <li>We cannot recover or reset your passphrase - it never leaves your browser</li>
+      <li>Write it down and store it somewhere safe</li>
+      <li>If you forget it, you will not be able to read any messages</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Hidden data for JS -->
+<script id="invite-data" type="application/json">
+<%= raw({
+  token: params[:token],
+  kdf_salt_b64u: @kdf_salt_b64u,
+  kdf_params: @kdf_params
+}.to_json) %>
+</script>
+
+<script type="module" nonce="<%= request.content_security_policy_nonce %>">
+  // Use sumo version for crypto_pwhash (Argon2) support
+  import sodiumModule from 'https://cdn.jsdelivr.net/npm/libsodium-wrappers-sumo@0.7.13/+esm';
+  const sodium = sodiumModule;
+
+  async function handleSubmit() {
+    const passphrase = document.getElementById('passphrase').value;
+    const passphraseConfirm = document.getElementById('passphrase-confirm').value;
+    const errorEl = document.getElementById('error-message');
+    const statusEl = document.getElementById('status-message');
+    const statusText = document.getElementById('status-text');
+    const submitBtn = document.getElementById('submit-btn');
+    const formEl = document.getElementById('invite-form');
+    const successEl = document.getElementById('success-message');
+
+    // Reset error state
+    errorEl.classList.add('hidden');
+
+    // Validate
+    if (passphrase.length < 12) {
+      errorEl.textContent = 'Passphrase must be at least 12 characters.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    if (passphrase !== passphraseConfirm) {
+      errorEl.textContent = 'Passphrases do not match.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    // Show loading
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-50');
+    statusEl.classList.remove('hidden');
+
+    try {
+      // Initialize sodium
+      await sodium.ready;
+
+      // Get invite data
+      const inviteData = JSON.parse(document.getElementById('invite-data').textContent);
+      const kdfSalt = sodium.from_base64(inviteData.kdf_salt_b64u, sodium.base64_variants.URLSAFE_NO_PADDING);
+      const kdfParams = inviteData.kdf_params;
+
+      statusText.textContent = 'Deriving encryption key (this may take a moment)...';
+
+      // Derive seed using Argon2id
+      const seed = sodium.crypto_pwhash(
+        32, // key length
+        passphrase,
+        kdfSalt,
+        kdfParams.opslimit,
+        kdfParams.memlimit,
+        sodium.crypto_pwhash_ALG_ARGON2ID13
+      );
+
+      statusText.textContent = 'Generating keypair...';
+
+      // Generate keypair from seed
+      const keypair = sodium.crypto_box_seed_keypair(seed);
+      const publicKeyB64u = sodium.to_base64(keypair.publicKey, sodium.base64_variants.URLSAFE_NO_PADDING);
+
+      statusText.textContent = 'Registering your key...';
+
+      // Submit to server
+      const response = await fetch(`/invites/${inviteData.token}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          public_key_b64u: publicKeyB64u,
+          kdf_salt_b64u: inviteData.kdf_salt_b64u,
+          kdf_params: kdfParams
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        formEl.classList.add('hidden');
+        successEl.classList.remove('hidden');
+      } else {
+        throw new Error(result.error || 'Failed to register key');
+      }
+
+    } catch (error) {
+      errorEl.textContent = error.message || 'An error occurred. Please try again.';
+      errorEl.classList.remove('hidden');
+      statusEl.classList.add('hidden');
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50');
+    }
+  }
+
+  // Attach event listener when DOM is ready
+  document.getElementById('submit-btn').addEventListener('click', handleSubmit);
+</script>

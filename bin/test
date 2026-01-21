@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+# Start containers if not running
+if ! docker compose ps --status running | grep -q "db"; then
+  echo "Starting PostgreSQL and Redis..."
+  docker compose up -d db redis
+  sleep 2
+fi
+
+RAILS_ENV=test PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bundle exec rspec "$@"

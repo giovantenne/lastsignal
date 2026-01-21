@@ -1,0 +1,20 @@
+URGENT: FINAL WARNING - Your <%= @app_name %> messages will be delivered soon
+<%= "=" * 60 %>
+
+You are now in the COOLDOWN PERIOD on <%= @app_name %>. Your encrypted messages will be delivered to your recipients unless you take action.
+
+*** MESSAGES WILL BE DELIVERED: <%= @cooldown_ends_at&.strftime("%B %d, %Y at %H:%M UTC") || "Soon" %> ***
+
+If you are still alive and want to STOP the delivery, click this link immediately:
+<%= @panic_revoke_url %>
+
+Clicking this link will:
+- Cancel the scheduled message delivery
+- Return you to active status
+- Schedule your next check-in
+
+IF YOU DO NOT CLICK THE LINK, YOUR MESSAGES WILL BE DELIVERED TO YOUR RECIPIENTS.
+
+---
+
+This is an automated message from <%= @app_name %>.

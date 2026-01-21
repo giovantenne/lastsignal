@@ -1,0 +1,79 @@
+<% content_for(:title) { "Messages - LastSignal" } %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Messages</h1>
+    <% if current_user.recipients.with_keys.any? %>
+      <%= link_to "Create Message", new_message_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700" %>
+    <% end %>
+  </div>
+
+  <% if @messages.empty? %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      <h3 class="mt-4 text-lg font-medium text-gray-900">No messages yet</h3>
+      <p class="mt-2 text-sm text-gray-500">
+        <% if current_user.recipients.with_keys.any? %>
+          Create encrypted messages that will be delivered to your recipients if you stop checking in.
+        <% else %>
+          You need at least one recipient with a registered encryption key before you can create messages.
+          <br><%= link_to "Add a recipient", new_recipient_path, class: "text-blue-600 hover:text-blue-800" %> first.
+        <% end %>
+      </p>
+      <% if current_user.recipients.with_keys.any? %>
+        <%= link_to "Create your first message", new_message_path, class: "mt-4 inline-flex items-center text-sm text-blue-600 hover:text-blue-800" %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <ul class="divide-y divide-gray-200">
+        <% @messages.each do |message| %>
+          <li class="p-4 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-3">
+                  <p class="text-sm font-medium text-gray-900 truncate">
+                    <%= message.label.presence || "Untitled Message" %>
+                  </p>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">
+                  <% recipient_names = message.recipients.map(&:display_name) %>
+                  <% if recipient_names.any? %>
+                    To: <%= recipient_names.first(3).join(", ") %><%= " and #{recipient_names.size - 3} more" if recipient_names.size > 3 %>
+                  <% else %>
+                    No recipients
+                  <% end %>
+                </p>
+                <p class="mt-1 text-xs text-gray-400">
+                  Created <%= message.created_at.strftime("%B %d, %Y") %>
+                  <% if message.updated_at > message.created_at + 1.minute %>
+                    &middot; Updated <%= message.updated_at.strftime("%B %d, %Y") %>
+                  <% end %>
+                </p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <%= link_to "View", message_path(message), class: "text-sm text-gray-600 hover:text-gray-800" %>
+                <%= link_to "Edit", edit_message_path(message), class: "text-sm text-blue-600 hover:text-blue-800" %>
+                <%= button_to "Delete", message_path(message),
+                    method: :delete,
+                    data: { turbo_confirm: "Delete this message? This cannot be undone." },
+                    class: "text-sm text-red-600 hover:text-red-800" %>
+              </div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- Info Box -->
+  <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <h3 class="text-sm font-medium text-blue-800">End-to-end encrypted</h3>
+    <p class="mt-1 text-sm text-blue-700">
+      Your messages are encrypted in your browser before being stored. We cannot read them - 
+      only your recipients can decrypt them using their passphrase.
+    </p>
+  </div>
+</div>
