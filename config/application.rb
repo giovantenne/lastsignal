@@ -43,7 +43,6 @@ module LastsignalApp
     config.active_job.queue_adapter = :solid_queue
 
     config.solid_queue.connects_to = { database: { writing: :queue } }
-    config.solid_cache.connects_to = { database: { writing: :cache } }
 
     # Default queue name
     config.active_job.queue_name_prefix = "lastsignal"
