@@ -12,8 +12,9 @@
       <%= link_to "Edit", edit_message_path(@message), class: "text-sm text-blue-600 hover:text-blue-800" %>
       <%= button_to "Delete", message_path(@message),
           method: :delete,
+          disabled: current_user.delivered?,
           data: { turbo_confirm: "Delete this message? This cannot be undone." },
-          class: "text-sm text-red-600 hover:text-red-800" %>
+          class: "text-sm text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" %>
     </div>
   </div>
 

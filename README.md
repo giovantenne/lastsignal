@@ -78,6 +78,9 @@ PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bin/rails server
 
 # Terminal 3: Start Sidekiq
 PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bundle exec sidekiq
+
+# Terminal 4: Rails console (with DB env)
+bin/console
 ```
 
 ## Test Environment

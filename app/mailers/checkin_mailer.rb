@@ -13,9 +13,10 @@ class CheckinMailer < ApplicationMailer
     )
   end
 
-  def grace_period_warning(user)
+  def grace_period_warning(user, raw_token)
     @user = user
     @grace_ends_at = user.grace_ends_at
+    @checkin_url = confirm_checkin_url(token: raw_token)
     @login_url = login_url
     @app_name = AppConfig.smtp_from_name
 
@@ -34,6 +35,18 @@ class CheckinMailer < ApplicationMailer
     mail(
       to: user.email,
       subject: "URGENT: Your #{@app_name} messages will be delivered soon"
+    )
+  end
+
+  def delivery_notice(user, recipient_emails)
+    @user = user
+    @delivered_at = user.delivered_at
+    @recipient_emails = recipient_emails
+    @app_name = AppConfig.smtp_from_name
+
+    mail(
+      to: user.email,
+      subject: "Your #{@app_name} messages were delivered to recipients"
     )
   end
 end

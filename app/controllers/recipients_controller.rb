@@ -2,6 +2,7 @@
 
 class RecipientsController < ApplicationController
   before_action :require_authentication
+  before_action :prevent_delivered_actions, only: [:new, :create, :destroy, :resend_invite]
   before_action :set_recipient, only: [:show, :destroy, :resend_invite]
 
   # GET /recipients
@@ -26,6 +27,14 @@ class RecipientsController < ApplicationController
       AuditLog.log(
         action: "recipient_invited",
         user: current_user,
+        metadata: { recipient_id: @recipient.id },
+        request: request
+      )
+
+      AuditLog.log(
+        action: "recipient_invite_sent",
+        user: current_user,
+        actor_type: "system",
         metadata: { recipient_id: @recipient.id },
         request: request
       )
@@ -61,6 +70,14 @@ class RecipientsController < ApplicationController
 
     raw_token = @recipient.generate_invite_token!
     RecipientMailer.invite(@recipient, raw_token).deliver_later
+
+    AuditLog.log(
+      action: "recipient_invite_sent",
+      user: current_user,
+      actor_type: "system",
+      metadata: { recipient_id: @recipient.id },
+      request: request
+    )
 
     flash[:notice] = "Invite resent to #{@recipient.email}."
     redirect_to recipients_path

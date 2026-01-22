@@ -9,7 +9,7 @@
   </div>
 
   <!-- Passphrase Form -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+  <div id="decrypt-card" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
     <div id="decrypt-form">
       <h2 class="text-lg font-medium text-gray-900 mb-4">Enter Your Passphrase</h2>
       <p class="text-sm text-gray-600 mb-4">
@@ -46,8 +46,12 @@
 
         <button type="button"
                 id="decrypt-btn"
-                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-          Decrypt Messages
+                class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <svg id="decrypt-spinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span id="decrypt-btn-text">Decrypt Messages</span>
         </button>
       </div>
     </div>
@@ -92,15 +96,30 @@
   // Use sumo version for crypto_pwhash (Argon2) support
   import sodium from 'libsodium-wrappers-sumo';
 
+  let payloadCache = null;
+
   async function handleDecrypt() {
     const passphrase = document.getElementById('passphrase').value;
     const errorEl = document.getElementById('error-message');
     const statusEl = document.getElementById('status-message');
     const statusText = document.getElementById('status-text');
     const decryptBtn = document.getElementById('decrypt-btn');
-    const decryptForm = document.getElementById('decrypt-form');
+    const decryptSpinner = document.getElementById('decrypt-spinner');
+    const decryptBtnText = document.getElementById('decrypt-btn-text');
+    const decryptCard = document.getElementById('decrypt-card');
     const messagesContainer = document.getElementById('messages-container');
     const messagesList = document.getElementById('messages-list');
+
+    const statusClasses = {
+      info: ['bg-blue-50', 'border-blue-200', 'text-blue-700'],
+      error: ['bg-red-50', 'border-red-200', 'text-red-700']
+    };
+
+    const setStatus = (message, type = 'info') => {
+      statusText.textContent = message;
+      statusEl.classList.remove('hidden', ...statusClasses.info, ...statusClasses.error);
+      statusEl.classList.add(...statusClasses[type]);
+    };
 
     // Reset error state
     errorEl.classList.add('hidden');
@@ -108,13 +127,20 @@
     if (!passphrase) {
       errorEl.textContent = 'Please enter your passphrase.';
       errorEl.classList.remove('hidden');
+      decryptSpinner.classList.add('hidden');
+      decryptBtnText.textContent = 'Decrypt Messages';
       return;
     }
 
     // Show loading
     decryptBtn.disabled = true;
     decryptBtn.classList.add('opacity-50');
-    statusEl.classList.remove('hidden');
+    decryptSpinner.classList.remove('hidden');
+    decryptBtnText.textContent = 'Decrypting...';
+    errorEl.classList.add('hidden');
+    setStatus('Decrypting messages...', 'info');
+
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     try {
       // Initialize sodium
@@ -123,17 +149,21 @@
       // Get delivery data
       const deliveryData = JSON.parse(document.getElementById('delivery-data').textContent);
 
-      statusText.textContent = 'Fetching encrypted messages...';
+      if (!payloadCache) {
+        setStatus('Fetching encrypted messages...', 'info');
 
-      // Fetch encrypted payloads
-      const response = await fetch(deliveryData.payloadUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages');
+        // Fetch encrypted payloads
+        const response = await fetch(deliveryData.payloadUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+
+        payloadCache = await response.json();
       }
 
-      const data = await response.json();
+      const data = payloadCache;
 
-      statusText.textContent = 'Deriving encryption key...';
+      setStatus('Deriving encryption key...', 'info');
 
       // Decrypt each message
       const decryptedMessages = [];
@@ -156,7 +186,7 @@
           // Generate keypair from seed
           const keypair = sodium.crypto_box_seed_keypair(seed);
 
-          statusText.textContent = `Decrypting message ${decryptedMessages.length + 1}...`;
+          setStatus(`Decrypting message ${decryptedMessages.length + 1}...`, 'info');
 
           // Decode encrypted message key
           const encryptedMsgKey = sodium.from_base64(msg.encrypted_msg_key_b64u, sodium.base64_variants.URLSAFE_NO_PADDING);
@@ -203,7 +233,7 @@
       
       for (const msg of decryptedMessages) {
         const messageEl = document.createElement('div');
-        messageEl.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6';
+        messageEl.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6 my-4';
         
         if (msg.error) {
           messageEl.innerHTML = `
@@ -231,16 +261,19 @@
       }
 
       // Show messages, hide form
-      decryptForm.classList.add('hidden');
+      decryptCard.classList.add('hidden');
       messagesContainer.classList.remove('hidden');
 
     } catch (error) {
       console.error('Decryption error:', error);
-      errorEl.textContent = error.message || 'Failed to decrypt. Please check your passphrase.';
+      const message = error.message || 'Failed to decrypt. Please check your passphrase.';
+      errorEl.textContent = message;
       errorEl.classList.remove('hidden');
       statusEl.classList.add('hidden');
       decryptBtn.disabled = false;
       decryptBtn.classList.remove('opacity-50');
+      decryptSpinner.classList.add('hidden');
+      decryptBtnText.textContent = 'Decrypt Messages';
     }
   }
 

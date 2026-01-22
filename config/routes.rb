@@ -36,6 +36,8 @@ Rails.application.routes.draw do
     post :regenerate_recovery_code
   end
 
+  get "audit", to: "audits#index", as: :audit
+
   # ============================================================================
   # Recipients (authenticated)
   # ============================================================================
@@ -55,6 +57,8 @@ Rails.application.routes.draw do
   # ============================================================================
   scope :checkin do
     get "confirm/:token", to: "checkins#confirm", as: :confirm_checkin
+    post "confirm/:token", to: "checkins#complete", as: :complete_checkin
+    get "success", to: "checkins#success", as: :checkin_success
   end
 
   # ============================================================================

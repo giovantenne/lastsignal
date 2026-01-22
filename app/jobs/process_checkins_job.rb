@@ -27,8 +27,16 @@ class ProcessCheckinsJob
 
       user.enter_grace!
 
-      # Send grace period notification
-      CheckinMailer.grace_period_warning(user).deliver_later
+      # Send grace period notification with check-in link
+      raw_token = generate_checkin_token(user)
+      CheckinMailer.grace_period_warning(user, raw_token).deliver_later
+
+      AuditLog.log(
+        action: "grace_warning_sent",
+        user: user,
+        actor_type: "system",
+        metadata: { grace_ends_at: user.grace_ends_at&.iso8601 }
+      )
 
       AuditLog.log(
         action: "state_to_grace",
@@ -51,6 +59,13 @@ class ProcessCheckinsJob
       # Generate panic revoke token and send email
       raw_token = generate_panic_token(user)
       CheckinMailer.cooldown_warning(user, raw_token).deliver_later
+
+      AuditLog.log(
+        action: "cooldown_warning_sent",
+        user: user,
+        actor_type: "system",
+        metadata: { cooldown_ends_at: user.cooldown_ends_at&.iso8601 }
+      )
 
       AuditLog.log(
         action: "state_to_cooldown",
@@ -81,6 +96,13 @@ class ProcessCheckinsJob
         actor_type: "system",
         metadata: { trusted_contact_id: contact.id, pinged_at: contact.last_pinged_at&.iso8601 }
       )
+
+      AuditLog.log(
+        action: "trusted_contact_ping_notice_sent",
+        user: contact.user,
+        actor_type: "system",
+        metadata: { trusted_contact_id: contact.id }
+      )
     end
   end
 
@@ -101,6 +123,21 @@ class ProcessCheckinsJob
       # Trigger message delivery
       DeliverMessagesJob.perform_async(user.id)
 
+      recipients = user.recipients.with_keys
+        .joins(:messages)
+        .where(messages: { user_id: user.id })
+        .distinct
+        .pluck(:email)
+
+      CheckinMailer.delivery_notice(user, recipients).deliver_later
+
+      AuditLog.log(
+        action: "delivery_notice_sent",
+        user: user,
+        actor_type: "system",
+        metadata: { delivered_at: user.delivered_at&.iso8601, recipients_count: recipients.size }
+      )
+
       AuditLog.log(
         action: "state_to_delivered",
         user: user,
@@ -117,6 +154,15 @@ class ProcessCheckinsJob
 
     # Store in user record (we'll add this column or use a separate table)
     user.update_column(:panic_token_digest, token_digest)
+
+    raw_token
+  end
+
+  def generate_checkin_token(user)
+    raw_token = SecureRandom.urlsafe_base64(32)
+    token_digest = Digest::SHA256.hexdigest(raw_token)
+
+    user.update_column(:checkin_token_digest, token_digest)
 
     raw_token
   end

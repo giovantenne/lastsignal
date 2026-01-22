@@ -23,6 +23,12 @@ RSpec.describe DeliverMessagesJob, type: :job do
         }.to have_enqueued_mail(RecipientMailer, :delivery)
       end
 
+      it "logs delivery emails" do
+        expect {
+          DeliverMessagesJob.new.perform(user.id)
+        }.to change { AuditLog.where(action: "recipient_delivery_sent").count }.by(1)
+      end
+
       it "includes message count in email" do
         expect(RecipientMailer).to receive(:delivery).with(recipient, anything, 1).and_call_original
         DeliverMessagesJob.new.perform(user.id)
@@ -51,6 +57,12 @@ RSpec.describe DeliverMessagesJob, type: :job do
         DeliverMessagesJob.new.perform(user.id)
         
         expect(ActionMailer::MailDeliveryJob).to have_been_enqueued.twice
+      end
+
+      it "logs delivery emails for each recipient" do
+        expect {
+          DeliverMessagesJob.new.perform(user.id)
+        }.to change { AuditLog.where(action: "recipient_delivery_sent").count }.by(2)
       end
     end
 

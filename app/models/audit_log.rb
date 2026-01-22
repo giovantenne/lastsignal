@@ -19,11 +19,20 @@ class AuditLog < ApplicationRecord
     checkin_confirmed
     checkin_paused
     checkin_resumed
+    checkin_reminder_sent
+    grace_warning_sent
+    cooldown_warning_sent
+    delivery_notice_sent
     panic_revoke_used
     emergency_stop
     delivery_link_opened
     trusted_contact_ping_sent
+    trusted_contact_ping_notice_sent
     trusted_contact_confirmed
+    trusted_contact_confirmation_notice_sent
+    magic_link_sent
+    recipient_invite_sent
+    recipient_delivery_sent
     message_decrypted
     account_updated
     account_deleted
@@ -37,8 +46,10 @@ class AuditLog < ApplicationRecord
 
   # Create an audit log entry
   def self.log(action:, user: nil, actor_type: "user", metadata: {}, request: nil)
+    user_id = user&.respond_to?(:id) ? user.id : user
+
     create!(
-      user: user,
+      user_id: user_id,
       actor_type: actor_type,
       action: action,
       metadata: sanitize_metadata(metadata),

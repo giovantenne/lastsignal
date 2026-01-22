@@ -38,6 +38,12 @@ class TrustedContactsController < ApplicationController
 
     TrustedContactMailer.confirmation_notice(trusted_contact.user, trusted_contact).deliver_later
 
+    AuditLog.log(
+      action: "trusted_contact_confirmation_notice_sent",
+      user: trusted_contact.user,
+      actor_type: "system",
+      metadata: { trusted_contact_id: trusted_contact.id }
+    )
     @trusted_contact = trusted_contact
     @user = trusted_contact.user
     render :success

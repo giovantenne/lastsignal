@@ -54,7 +54,7 @@ RSpec.describe "Recipients", type: :request do
       it "creates audit log" do
         expect {
           post recipients_path, params: valid_params
-        }.to change(AuditLog, :count).by(1)
+        }.to change(AuditLog, :count).by(2)
       end
 
       it "redirects to recipients list" do

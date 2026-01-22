@@ -36,7 +36,7 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     it "sends grace period warning email" do
       expect {
         ProcessCheckinsJob.new.perform
-      }.to have_enqueued_mail(CheckinMailer, :grace_period_warning).with(user_needs_grace)
+      }.to have_enqueued_mail(CheckinMailer, :grace_period_warning).with(user_needs_grace, anything)
     end
 
     it "creates audit log" do
@@ -151,6 +151,41 @@ RSpec.describe ProcessCheckinsJob, type: :job do
       expect {
         ProcessCheckinsJob.new.perform
       }.to change { AuditLog.where(action: "state_to_delivered").count }.by(1)
+    end
+
+    it "sends delivery notice to user" do
+      allow(DeliverMessagesJob).to receive(:perform_async)
+
+      message = create(:message, :with_recipient, user: user_cooldown_expired)
+      recipient_emails = message.recipients.pluck(:email)
+
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_mail(CheckinMailer, :delivery_notice).with(user_cooldown_expired, recipient_emails)
+    end
+
+    it "progresses through the full timeline based on dates" do
+      allow(DeliverMessagesJob).to receive(:perform_async)
+      base_time = Time.current
+      user = create(:user, :needs_checkin, checkin_interval_hours: 24, grace_period_hours: 24, cooldown_period_hours: 24)
+
+      travel_to(base_time) do
+        ProcessCheckinsJob.new.perform
+        expect(user.reload.state).to eq("grace")
+        expect(user.grace_started_at).to be_within(1.second).of(base_time)
+      end
+
+      travel_to(base_time + 25.hours) do
+        ProcessCheckinsJob.new.perform
+        expect(user.reload.state).to eq("cooldown")
+        expect(user.cooldown_started_at).to be_within(1.second).of(base_time + 25.hours)
+      end
+
+      travel_to(base_time + 50.hours) do
+        ProcessCheckinsJob.new.perform
+        expect(user.reload.state).to eq("delivered")
+        expect(user.delivered_at).to be_within(1.second).of(base_time + 50.hours)
+      end
     end
   end
 end

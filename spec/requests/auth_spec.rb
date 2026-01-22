@@ -50,7 +50,7 @@ RSpec.describe "Auth", type: :request do
       it "creates audit log" do
         expect {
           post magic_link_path, params: { email: "test@example.com" }
-        }.to change(AuditLog, :count).by(1)
+        }.to change(AuditLog, :count).by(2)
       end
 
       it "redirects to login with notice" do
@@ -67,12 +67,12 @@ RSpec.describe "Auth", type: :request do
     end
 
     context "with allowlist enabled" do
-      around do |example|
-        original = ENV.fetch("ALLOWED_EMAILS", nil)
+      before do
         ENV["ALLOWED_EMAILS"] = "allowed@example.com,owner@example.com"
-        example.run
-      ensure
-        ENV["ALLOWED_EMAILS"] = original
+      end
+
+      after do
+        ENV["ALLOWED_EMAILS"] = ""
       end
 
       it "blocks emails not on the list" do
@@ -163,12 +163,12 @@ RSpec.describe "Auth", type: :request do
     end
 
     context "with allowlist enabled" do
-      around do |example|
-        original = ENV.fetch("ALLOWED_EMAILS", nil)
+      before do
         ENV["ALLOWED_EMAILS"] = "allowed@example.com"
-        example.run
-      ensure
-        ENV["ALLOWED_EMAILS"] = original
+      end
+
+      after do
+        ENV["ALLOWED_EMAILS"] = ""
       end
 
       it "blocks users not on the list" do

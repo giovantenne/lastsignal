@@ -49,6 +49,7 @@ RSpec.configure do |config|
   # Use test adapter for ActiveJob
   config.before(:each) do
     ActiveJob::Base.queue_adapter = :test
+    ENV["ALLOWED_EMAILS"] = ""
   end
 
   # Focus on specific tests with :focus tag

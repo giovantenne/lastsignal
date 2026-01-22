@@ -142,11 +142,12 @@ RSpec.describe User, type: :model do
         end
       end
 
-      it "clears grace and cooldown timestamps" do
-        user = create(:user, :in_cooldown)
+      it "clears grace, cooldown, and delivered timestamps" do
+        user = create(:user, :delivered)
         user.confirm_checkin!
         expect(user.grace_started_at).to be_nil
         expect(user.cooldown_started_at).to be_nil
+        expect(user.delivered_at).to be_nil
       end
     end
 

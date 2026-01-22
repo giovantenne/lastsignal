@@ -37,4 +37,17 @@ class ApplicationController < ActionController::Base
       redirect_to dashboard_path
     end
   end
+
+  def prevent_delivered_actions
+    return unless current_user&.delivered?
+
+    message = "Your account is in delivered state and is read-only."
+
+    if request.format.json?
+      render json: { error: message }, status: :forbidden
+    else
+      flash[:alert] = message
+      redirect_to dashboard_path
+    end
+  end
 end

@@ -23,7 +23,8 @@ RSpec.describe CheckinMailer, type: :mailer do
 
   describe "#grace_period_warning" do
     let(:user) { create(:user, :in_grace, email: "test@example.com") }
-    let(:mail) { described_class.grace_period_warning(user) }
+    let(:raw_token) { SecureRandom.urlsafe_base64(32) }
+    let(:mail) { described_class.grace_period_warning(user, raw_token) }
 
     it "sends to user email" do
       expect(mail.to).to eq(["test@example.com"])
@@ -33,8 +34,8 @@ RSpec.describe CheckinMailer, type: :mailer do
       expect(mail.subject).to include("missed your")
     end
 
-    it "includes login URL" do
-      expect(mail.body.encoded).to include("login")
+    it "includes check-in URL" do
+      expect(mail.body.encoded).to include(raw_token)
     end
   end
 
@@ -53,6 +54,24 @@ RSpec.describe CheckinMailer, type: :mailer do
 
     it "includes panic revoke URL with token" do
       expect(mail.body.encoded).to include(raw_token)
+    end
+  end
+
+  describe "#delivery_notice" do
+    let(:user) { create(:user, :in_cooldown, delivered_at: Time.current, email: "test@example.com") }
+    let(:recipients) { ["recipient1@example.com", "recipient2@example.com"] }
+    let(:mail) { described_class.delivery_notice(user, recipients) }
+
+    it "sends to user email" do
+      expect(mail.to).to eq(["test@example.com"])
+    end
+
+    it "has delivered subject" do
+      expect(mail.subject).to include("delivered to recipients")
+    end
+
+    it "includes recipient emails" do
+      expect(mail.body.encoded).to include("recipient1@example.com")
     end
   end
 end

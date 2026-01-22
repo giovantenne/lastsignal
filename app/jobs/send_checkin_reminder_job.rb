@@ -17,6 +17,13 @@ class SendCheckinReminderJob
     raw_token = generate_checkin_token(user)
     CheckinMailer.reminder(user, raw_token).deliver_later
 
+    AuditLog.log(
+      action: "checkin_reminder_sent",
+      user: user,
+      actor_type: "system",
+      metadata: { next_checkin_at: user.next_checkin_at&.iso8601 }
+    )
+
     Rails.logger.info "[SendCheckinReminderJob] Sent check-in reminder to user #{user_id}"
   end
 

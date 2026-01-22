@@ -33,6 +33,14 @@ class AuthController < ApplicationController
         request: request
       )
 
+      AuditLog.log(
+        action: "magic_link_sent",
+        user: user,
+        actor_type: "system",
+        metadata: {},
+        request: request
+      )
+
       flash[:notice] = "Check your email for a login link. It expires in #{AppConfig.magic_link_ttl_minutes} minutes."
     else
       flash[:alert] = "Please enter a valid email address."
@@ -59,8 +67,9 @@ class AuthController < ApplicationController
       session[:user_id] = token.user_id
       session[:created_at] = Time.current.to_i
 
-      # Update user's last login
-      token.user.touch(:last_checkin_confirmed_at)
+      # Treat login as a check-in
+      token.user.confirm_checkin!
+      token.user.update_column(:checkin_token_digest, nil)
 
       AuditLog.log(
         action: "login_success",

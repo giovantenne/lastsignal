@@ -1,0 +1,44 @@
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <nav class="text-sm text-gray-500 mb-2">
+        <%= link_to "Account", account_path, class: "hover:text-gray-700" %> /
+      </nav>
+      <h1 class="text-2xl font-bold text-gray-900">Audit Log</h1>
+    </div>
+    <%= link_to "Download CSV", audit_path(format: :csv), class: "inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-blue-600 hover:text-blue-800" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% if @audit_logs.any? %>
+          <% @audit_logs.each do |log| %>
+            <tr>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                <%= log.created_at.strftime("%B %d, %Y %H:%M UTC") %>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-900 font-medium">
+                <%= log.action.humanize %>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-600">
+                <%= log.metadata.presence || "-" %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td class="px-4 py-6 text-sm text-gray-500" colspan="3">No audit events yet.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

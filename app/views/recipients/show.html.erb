@@ -12,12 +12,14 @@
       <% if @recipient.invited? %>
         <%= button_to "Resend Invite", resend_invite_recipient_path(@recipient),
             method: :post,
-            class: "text-sm text-blue-600 hover:text-blue-800" %>
+            disabled: current_user.delivered?,
+            class: "text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed" %>
       <% end %>
       <%= button_to "Remove", recipient_path(@recipient),
           method: :delete,
+          disabled: current_user.delivered?,
           data: { turbo_confirm: "Remove #{@recipient.display_name}? They will no longer receive your messages." },
-          class: "text-sm text-red-600 hover:text-red-800" %>
+          class: "text-sm text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" %>
     </div>
   </div>
 

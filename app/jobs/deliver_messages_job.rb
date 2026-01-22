@@ -25,6 +25,13 @@ class DeliverMessagesJob
       # Send delivery email
       RecipientMailer.delivery(recipient, raw_token, messages.count).deliver_later
 
+      AuditLog.log(
+        action: "recipient_delivery_sent",
+        user: user,
+        actor_type: "system",
+        metadata: { recipient_id: recipient.id, messages_count: messages.count }
+      )
+
       Rails.logger.info "[DeliverMessagesJob] Sent delivery email to recipient #{recipient.id} with #{messages.count} messages"
     end
   end

@@ -5,7 +5,10 @@ You've entered the GRACE PERIOD on <%= @app_name %> because you missed your sche
 
 Grace period ends: <%= @grace_ends_at&.strftime("%B %d, %Y at %H:%M UTC") || "Soon" %>
 
-Log in to check in:
+Confirm check-in:
+<%= @checkin_url %>
+
+Log in if you need to update settings:
 <%= @login_url %>
 
 If you don't check in before the grace period ends, you'll enter a final cooldown period. After that, your encrypted messages will be delivered to your recipients.
