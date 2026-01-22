@@ -35,7 +35,7 @@ class ProcessCheckinsJob < ApplicationJob
 
         user.update_column(:checkin_reminder_sent_at, Time.current)
 
-        AuditLog.log(
+        safe_audit_log(
           action: "checkin_reminder_sent",
           user: user,
           actor_type: "system",
@@ -66,14 +66,14 @@ class ProcessCheckinsJob < ApplicationJob
 
         user.update_column(:grace_warning_sent_at, Time.current)
 
-        AuditLog.log(
+        safe_audit_log(
           action: "grace_warning_sent",
           user: user,
           actor_type: "system",
           metadata: { grace_ends_at: user.grace_ends_at&.iso8601 }
         )
 
-        AuditLog.log(
+        safe_audit_log(
           action: "state_to_grace",
           user: user,
           actor_type: "system",
@@ -104,14 +104,14 @@ class ProcessCheckinsJob < ApplicationJob
 
         user.update_column(:cooldown_warning_sent_at, Time.current)
 
-        AuditLog.log(
+        safe_audit_log(
           action: "cooldown_warning_sent",
           user: user,
           actor_type: "system",
           metadata: { cooldown_ends_at: user.cooldown_ends_at&.iso8601 }
         )
 
-        AuditLog.log(
+        safe_audit_log(
           action: "state_to_cooldown",
           user: user,
           actor_type: "system",
@@ -136,14 +136,14 @@ class ProcessCheckinsJob < ApplicationJob
 
         contact.update!(last_pinged_at: Time.current)
 
-        AuditLog.log(
+        safe_audit_log(
           action: "trusted_contact_ping_sent",
           user: contact.user,
           actor_type: "system",
           metadata: { trusted_contact_id: contact.id, pinged_at: contact.last_pinged_at&.iso8601 }
         )
 
-        AuditLog.log(
+        safe_audit_log(
           action: "trusted_contact_ping_notice_sent",
           user: contact.user,
           actor_type: "system",
@@ -186,14 +186,14 @@ class ProcessCheckinsJob < ApplicationJob
 
         user.update_column(:delivery_notice_sent_at, Time.current)
 
-        AuditLog.log(
+        safe_audit_log(
           action: "delivery_notice_sent",
           user: user,
           actor_type: "system",
           metadata: { delivered_at: user.delivered_at&.iso8601, recipients_count: recipients.size }
         )
 
-        AuditLog.log(
+        safe_audit_log(
           action: "state_to_delivered",
           user: user,
           actor_type: "system",
@@ -235,5 +235,11 @@ class ProcessCheckinsJob < ApplicationJob
       contact.lock!
       yield
     end
+  end
+
+  def safe_audit_log(**args)
+    AuditLog.log(**args)
+  rescue StandardError => e
+    Rails.logger.error("[ProcessCheckinsJob] AuditLog failed: #{e.class}: #{e.message}")
   end
 end

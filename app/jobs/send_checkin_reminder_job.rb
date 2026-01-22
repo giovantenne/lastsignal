@@ -22,7 +22,7 @@ class SendCheckinReminderJob < ApplicationJob
 
       user.update_column(:checkin_reminder_sent_at, Time.current)
 
-      AuditLog.log(
+      safe_audit_log(
         action: "checkin_reminder_sent",
         user: user,
         actor_type: "system",
@@ -43,5 +43,11 @@ class SendCheckinReminderJob < ApplicationJob
     user.update_column(:checkin_token_digest, token_digest)
 
     raw_token
+  end
+
+  def safe_audit_log(**args)
+    AuditLog.log(**args)
+  rescue StandardError => e
+    Rails.logger.error("[SendCheckinReminderJob] AuditLog failed: #{e.class}: #{e.message}")
   end
 end

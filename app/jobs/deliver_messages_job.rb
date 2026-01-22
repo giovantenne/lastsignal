@@ -23,7 +23,7 @@ class DeliverMessagesJob < ApplicationJob
       # Send delivery email
       RecipientMailer.delivery(recipient, raw_token, messages.count).deliver_later
 
-      AuditLog.log(
+      safe_audit_log(
         action: "recipient_delivery_sent",
         user: user,
         actor_type: "system",
@@ -32,5 +32,11 @@ class DeliverMessagesJob < ApplicationJob
 
       Rails.logger.info "[DeliverMessagesJob] Sent delivery email to recipient #{recipient.id} with #{messages.count} messages"
     end
+  end
+
+  def safe_audit_log(**args)
+    AuditLog.log(**args)
+  rescue StandardError => e
+    Rails.logger.error("[DeliverMessagesJob] AuditLog failed: #{e.class}: #{e.message}")
   end
 end
