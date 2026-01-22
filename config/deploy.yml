@@ -4,10 +4,13 @@ service: lastsignal_app
 # Name of the container image.
 image: ghcr.io/giovantenne/lastsignal_app
 
+# Load secrets directly from .env.production (and .env.production-common if present).
+secrets_path: .env.production
+
 # Deploy to these servers.
 servers:
   web:
-    - 164.90.181.10
+    - 68.183.213.22
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -19,7 +22,7 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: ls.z79.it
+  host: lastsignal.benve.it
 
 # Credentials for your image host.
 registry:
@@ -62,8 +65,8 @@ env:
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
-    APP_BASE_URL: https://ls.z79.it
-    APP_HOST: ls.z79.it
+    APP_BASE_URL: https://lastsignal.benve.it
+    APP_HOST: lastsignal.benve.it
     MAGIC_LINK_TTL_MINUTES: 15
     INVITE_TOKEN_TTL_DAYS: 7
     RATE_LIMIT_MAGIC_LINK_PER_IP: 5

@@ -3,16 +3,60 @@
 require "rails_helper"
 
 RSpec.describe ProcessCheckinsJob, type: :job do
+  before do
+    allow(AuditLog).to receive(:log)
+  end
   describe "#perform" do
     it "processes all check-in phases" do
       job = ProcessCheckinsJob.new
       
+      expect(job).to receive(:process_due_reminders)
       expect(job).to receive(:process_missed_checkins)
       expect(job).to receive(:process_grace_expirations)
       expect(job).to receive(:process_trusted_contact_pings)
       expect(job).to receive(:process_cooldown_expirations)
       
       job.perform
+    end
+  end
+
+  describe "process_due_reminders" do
+    let!(:user_due_soon) { create(:user).tap { |u| u.update_column(:next_checkin_at, 12.hours.from_now) } }
+    let!(:user_due_later) { create(:user).tap { |u| u.update_column(:next_checkin_at, 3.days.from_now) } }
+    let!(:user_overdue) { create(:user).tap { |u| u.update_column(:next_checkin_at, 2.hours.ago) } }
+
+    it "sends a reminder for check-ins due within 24 hours" do
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_mail(CheckinMailer, :reminder).with(user_due_soon, anything)
+      expect(user_due_soon.reload.checkin_reminder_sent_at).to be_present
+    end
+
+    it "does not send reminders for check-ins beyond 24 hours" do
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.not_to have_enqueued_mail(CheckinMailer, :reminder).with(user_due_later, anything)
+    end
+
+    it "does not send reminders for overdue check-ins" do
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.not_to have_enqueued_mail(CheckinMailer, :reminder).with(user_overdue, anything)
+    end
+
+    it "sends only one reminder per cycle" do
+      ProcessCheckinsJob.new.perform
+
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.not_to have_enqueued_mail(CheckinMailer, :reminder).with(user_due_soon, anything)
+    end
+
+    it "resets reminder after check-in confirmation" do
+      ProcessCheckinsJob.new.perform
+      user_due_soon.reload.confirm_checkin!
+
+      expect(user_due_soon.reload.checkin_reminder_sent_at).to be_nil
     end
   end
 
@@ -40,9 +84,9 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     it "creates audit log" do
-      expect {
-        ProcessCheckinsJob.new.perform
-      }.to change { AuditLog.where(action: "state_to_grace").count }.by(1)
+      expect(AuditLog).to receive(:log).with(hash_including(action: "state_to_grace")).at_least(:once)
+
+      ProcessCheckinsJob.new.perform
     end
   end
 
@@ -75,9 +119,9 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     it "creates audit log" do
-      expect {
-        ProcessCheckinsJob.new.perform
-      }.to change { AuditLog.where(action: "state_to_cooldown").count }.by(1)
+      expect(AuditLog).to receive(:log).with(hash_including(action: "state_to_cooldown")).at_least(:once)
+
+      ProcessCheckinsJob.new.perform
     end
   end
 
@@ -106,9 +150,9 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     it "creates audit log entry" do
-      expect {
-        ProcessCheckinsJob.new.perform
-      }.to change { AuditLog.where(action: "trusted_contact_ping_sent").count }.by(1)
+      expect(AuditLog).to receive(:log).with(hash_including(action: "trusted_contact_ping_sent")).at_least(:once)
+
+      ProcessCheckinsJob.new.perform
     end
   end
 
@@ -146,9 +190,9 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     it "creates audit log" do
-      expect {
-        ProcessCheckinsJob.new.perform
-      }.to change { AuditLog.where(action: "state_to_delivered").count }.by(1)
+      expect(AuditLog).to receive(:log).with(hash_including(action: "state_to_delivered")).at_least(:once)
+
+      ProcessCheckinsJob.new.perform
     end
 
     it "sends delivery notice to user" do

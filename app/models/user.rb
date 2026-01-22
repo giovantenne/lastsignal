@@ -104,6 +104,10 @@ class User < ApplicationRecord
       state: :active,
       last_checkin_confirmed_at: Time.current,
       next_checkin_at: Time.current + effective_checkin_interval_hours.hours,
+      checkin_reminder_sent_at: nil,
+      grace_warning_sent_at: nil,
+      cooldown_warning_sent_at: nil,
+      delivery_notice_sent_at: nil,
       grace_started_at: nil,
       cooldown_started_at: nil,
       delivered_at: nil
@@ -116,7 +120,9 @@ class User < ApplicationRecord
 
     update!(
       state: :grace,
-      grace_started_at: Time.current
+      grace_started_at: Time.current,
+      checkin_reminder_sent_at: nil,
+      grace_warning_sent_at: nil
     )
   end
 

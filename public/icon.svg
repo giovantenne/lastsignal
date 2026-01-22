@@ -1,3 +1,11 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#0a0a0f"/>
+  <path d="M16 6C11.5817 6 8 9.58172 8 14V18C8 22.4183 11.5817 26 16 26C20.4183 26 24 22.4183 24 18V14C24 9.58172 20.4183 6 16 6ZM16 8C19.3137 8 22 10.6863 22 14V15H10V14C10 10.6863 12.6863 8 16 8ZM16 24C12.6863 24 10 21.3137 10 18V17H22V18C22 21.3137 19.3137 24 16 24Z" fill="url(#grad)"/>
+  <circle cx="16" cy="20" r="2" fill="url(#grad)"/>
 </svg>
