@@ -62,6 +62,8 @@ production:
     database: lastsignal_app_production
     username: lastsignal_app
     password: <%= ENV["LASTSIGNAL_APP_DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "localhost") %>
+    port: <%= ENV.fetch("DB_PORT", 5432) %>
   cache:
     <<: *primary_production
     database: lastsignal_app_production_cache

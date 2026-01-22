@@ -31,6 +31,9 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "solid_cache"
 gem "solid_queue"
 
+# Redis cache store support
+gem "redis", ">= 4.0.1"
+
 # Background jobs with Sidekiq
 gem "sidekiq"
 gem "sidekiq-cron"

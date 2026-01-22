@@ -36,18 +36,14 @@ cp .env.example .env
 
 ### 3. Run the setup script (recommended)
 
-```bash
-bin/setup
-```
-
-The setup script installs dependencies, prepares the database, and clears logs/tempfiles. It uses default values for `PGHOST`, `PGUSER`, and `PGPASSWORD` if not set.
-
-### 4. Setup database (manual)
+Start the containers first:
 
 ```bash
 docker compose up -d db redis
-PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bin/rails db:setup
+bin/setup
 ```
+
+The setup script installs dependencies, prepares the development and test databases, and clears logs/tempfiles. It uses default values for `PGHOST`, `PGUSER`, and `PGPASSWORD` if not set.
 
 ### Start the development stack
 
@@ -105,19 +101,41 @@ bin/test --format documentation         # Detailed output
 
 ## Production Deployment
 
-### With Docker Compose
+### Deploy with Kamal
 
+Kamal is the recommended path for production deployments.
+
+1) Install Kamal (once per workstation):
 ```bash
-cp .env.example .env
-# Configure production values in .env
-
-docker compose up --build
+gem install kamal
 ```
 
-### Prepare the production database
+2) Configure `config/deploy.yml`:
+- Set `image` to your registry image name (e.g. `ghcr.io/you/lastsignal_app`).
+- Update `servers.web` with your host(s).
+- Set `proxy.host` to your public domain.
+- Ensure `env.clear` includes `APP_BASE_URL`, `SMTP_*`, and `REDIS_URL` if needed.
 
+3) Create secrets in `.kamal/secrets`:
 ```bash
-RAILS_ENV=production bin/rails db:prepare
+KAMAL_REGISTRY_PASSWORD=your-registry-token
+RAILS_MASTER_KEY=your-master-key
+```
+
+4) Build and deploy:
+```bash
+bin/kamal setup
+bin/kamal deploy
+```
+
+5) Prepare the production database:
+```bash
+bin/kamal app exec --interactive --reuse "bin/rails db:prepare"
+```
+
+6) View logs:
+```bash
+bin/kamal logs
 ```
 
 ### Environment Variables

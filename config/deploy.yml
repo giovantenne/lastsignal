@@ -2,12 +2,12 @@
 service: lastsignal_app
 
 # Name of the container image.
-image: your-user/lastsignal_app
+image: ghcr.io/giovantenne/lastsignal_app
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - 164.90.181.10
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -19,13 +19,14 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: app.example.com
+  host: ls.z79.it
 
 # Credentials for your image host.
 registry:
   # Specify the registry server, if you're not using Docker Hub
   # server: registry.digitalocean.com / ghcr.io / ...
-  username: your-user
+  server: ghcr.io
+  username: giovantenne
 
   # Always use an access token rather than real password when possible.
   password:
@@ -35,10 +36,14 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - LASTSIGNAL_APP_DATABASE_PASSWORD
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
+    DB_HOST: lastsignal_app-db
+    DB_PORT: 5432
+    REDIS_URL: redis://lastsignal_app-redis:6379/0
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
@@ -92,25 +97,22 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     # Change to 3306 to expose port to the world instead of just local network.
-#     port: "127.0.0.1:3306:3306"
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
-#   redis:
-#     image: redis:7.0
-#     host: 192.168.0.2
-#     port: 6379
-#     directories:
-#       - data:/data
+accessories:
+  db:
+    image: postgres:16
+    host: 164.90.181.10
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: lastsignal_app
+        POSTGRES_DB: lastsignal_app_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+  redis:
+    image: redis:7.2
+    host: 164.90.181.10
+    port: "127.0.0.1:6379:6379"
+    directories:
+      - data:/data
