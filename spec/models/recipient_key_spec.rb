@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe RecipientKey, type: :model do
   describe "validations" do
-    subject { build(:recipient_key) }
+    subject { create(:recipient_key) }
 
     it { should validate_presence_of(:public_key_b64u) }
     it { should validate_presence_of(:kdf_salt_b64u) }

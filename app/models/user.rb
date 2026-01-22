@@ -66,17 +66,24 @@ class User < ApplicationRecord
 
   scope :needing_cooldown_transition, -> {
     where(state: :grace)
-      .where("grace_started_at + (COALESCE(grace_period_hours, ?) * INTERVAL '1 hour') <= ?",
-             AppConfig.checkin_default_grace_hours,
+      .where("#{datetime_add_hours_sql("grace_started_at", "COALESCE(grace_period_hours, #{AppConfig.checkin_default_grace_hours})")} <= ?",
              Time.current)
   }
 
   scope :needing_delivery, -> {
     where(state: :cooldown)
-      .where("cooldown_started_at + (COALESCE(cooldown_period_hours, ?) * INTERVAL '1 hour') <= ?",
-             AppConfig.checkin_default_cooldown_hours,
+      .where("#{datetime_add_hours_sql("cooldown_started_at", "COALESCE(cooldown_period_hours, #{AppConfig.checkin_default_cooldown_hours})")} <= ?",
              Time.current)
   }
+
+  def self.datetime_add_hours_sql(column, hours_sql)
+    adapter = connection.adapter_name.downcase
+    if adapter.include?("sqlite")
+      "datetime(#{column}, '+' || #{hours_sql} || ' hours')"
+    else
+      "#{column} + (#{hours_sql} * INTERVAL '1 hour')"
+    end
+  end
 
   # Instance methods for check-in timing
   def effective_checkin_interval_hours

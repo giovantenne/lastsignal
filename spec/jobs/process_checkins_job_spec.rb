@@ -132,30 +132,26 @@ RSpec.describe ProcessCheckinsJob, type: :job do
       contact = create(:trusted_contact, user: user_cooldown_expired)
       contact.update!(paused_until: 2.days.from_now)
 
-      expect(DeliverMessagesJob).not_to receive(:perform_async)
-
-      ProcessCheckinsJob.new.perform
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.not_to have_enqueued_job(DeliverMessagesJob)
 
       expect(user_cooldown_expired.reload.state).to eq("cooldown")
     end
 
     it "enqueues DeliverMessagesJob" do
-      expect(DeliverMessagesJob).to receive(:perform_async).with(user_cooldown_expired.id)
-      
-      ProcessCheckinsJob.new.perform
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_job(DeliverMessagesJob).with(user_cooldown_expired.id)
     end
 
     it "creates audit log" do
-      allow(DeliverMessagesJob).to receive(:perform_async)
-      
       expect {
         ProcessCheckinsJob.new.perform
       }.to change { AuditLog.where(action: "state_to_delivered").count }.by(1)
     end
 
     it "sends delivery notice to user" do
-      allow(DeliverMessagesJob).to receive(:perform_async)
-
       message = create(:message, :with_recipient, user: user_cooldown_expired)
       recipient_emails = message.recipients.pluck(:email)
 
@@ -165,7 +161,6 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     it "progresses through the full timeline based on dates" do
-      allow(DeliverMessagesJob).to receive(:perform_async)
       base_time = Time.current
       user = create(:user, :needs_checkin, checkin_interval_hours: 24, grace_period_hours: 24, cooldown_period_hours: 24)
 

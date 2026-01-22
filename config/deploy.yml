@@ -36,14 +36,19 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
-    - LASTSIGNAL_APP_DATABASE_PASSWORD
+    - SECRET_KEY_BASE
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USER
+    - SMTP_PASS
+    - SMTP_DOMAIN
+    - SMTP_FROM_EMAIL
+    - SMTP_FROM_NAME
+    - EMAIL_WEBHOOK_SECRET
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
-    DB_HOST: lastsignal_app-db
-    DB_PORT: 5432
-    REDIS_URL: redis://lastsignal_app-redis:6379/0
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
@@ -57,6 +62,30 @@ env:
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
+    APP_BASE_URL: https://ls.z79.it
+    APP_HOST: ls.z79.it
+    MAGIC_LINK_TTL_MINUTES: 15
+    INVITE_TOKEN_TTL_DAYS: 7
+    RATE_LIMIT_MAGIC_LINK_PER_IP: 5
+    RATE_LIMIT_MAGIC_LINK_PERIOD: 300
+    ARGON2ID_OPS_LIMIT: 3
+    ARGON2ID_MEM_LIMIT: 268435456
+    CHECKIN_DEFAULT_INTERVAL_HOURS: 168
+    CHECKIN_DEFAULT_GRACE_HOURS: 72
+    CHECKIN_DEFAULT_COOLDOWN_HOURS: 48
+    CHECKIN_MIN_INTERVAL_HOURS: 24
+    CHECKIN_MIN_GRACE_HOURS: 24
+    CHECKIN_MIN_COOLDOWN_HOURS: 24
+    CHECKIN_MAX_INTERVAL_HOURS: 8760
+    CHECKIN_MAX_GRACE_HOURS: 720
+    CHECKIN_MAX_COOLDOWN_HOURS: 720
+    TRUSTED_CONTACT_DEFAULT_PING_INTERVAL_HOURS: 24
+    TRUSTED_CONTACT_DEFAULT_PAUSE_DURATION_HOURS: 168
+    TRUSTED_CONTACT_MIN_PING_INTERVAL_HOURS: 12
+    TRUSTED_CONTACT_MAX_PING_INTERVAL_HOURS: 720
+    TRUSTED_CONTACT_MIN_PAUSE_DURATION_HOURS: 24
+    TRUSTED_CONTACT_MAX_PAUSE_DURATION_HOURS: 720
+    TRUSTED_CONTACT_TOKEN_TTL_HOURS: 168
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r job" will tail logs from the first server in the job section.
@@ -97,22 +126,22 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-accessories:
-  db:
-    image: postgres:16
-    host: 164.90.181.10
-    port: "127.0.0.1:5432:5432"
-    env:
-      clear:
-        POSTGRES_USER: lastsignal_app
-        POSTGRES_DB: lastsignal_app_production
-      secret:
-        - POSTGRES_PASSWORD
-    directories:
-      - data:/var/lib/postgresql/data
-  redis:
-    image: redis:7.2
-    host: 164.90.181.10
-    port: "127.0.0.1:6379:6379"
-    directories:
-      - data:/data
+# accessories:
+#   db:
+#     image: postgres:16
+#     host: 164.90.181.10
+#     port: "127.0.0.1:5432:5432"
+#     env:
+#       clear:
+#         POSTGRES_USER: lastsignal_app
+#         POSTGRES_DB: lastsignal_app_production
+#       secret:
+#         - POSTGRES_PASSWORD
+#     directories:
+#       - data:/var/lib/postgresql/data
+#   redis:
+#     image: redis:7.2
+#     host: 164.90.181.10
+#     port: "127.0.0.1:6379:6379"
+#     directories:
+#       - data:/data

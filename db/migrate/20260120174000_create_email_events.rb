@@ -6,7 +6,7 @@ class CreateEmailEvents < ActiveRecord::Migration[8.0]
       t.string :message_id
       t.string :recipient_email_hash
       t.datetime :event_timestamp
-      t.jsonb :raw_json, default: {}
+      t.json :raw_json, default: {}
 
       t.timestamps
     end

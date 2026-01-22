@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Recipient, type: :model do
   describe "validations" do
-    subject { build(:recipient) }
+    subject { create(:recipient) }
 
     it { should validate_presence_of(:email) }
     it { should allow_value("recipient@example.com").for(:email) }

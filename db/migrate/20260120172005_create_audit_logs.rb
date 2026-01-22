@@ -4,7 +4,7 @@ class CreateAuditLogs < ActiveRecord::Migration[8.0]
       t.references :user, foreign_key: true
       t.string :actor_type, null: false
       t.string :action, null: false
-      t.jsonb :metadata, default: {}
+      t.json :metadata, default: {}
       t.string :ip_hash
       t.string :user_agent_hash
 

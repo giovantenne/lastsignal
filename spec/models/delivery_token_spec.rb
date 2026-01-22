@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe DeliveryToken, type: :model do
   describe "validations" do
-    subject { build(:delivery_token) }
+    subject { create(:delivery_token) }
 
     it { should validate_presence_of(:token_digest) }
     it { should validate_uniqueness_of(:token_digest) }

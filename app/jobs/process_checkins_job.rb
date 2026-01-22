@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-class ProcessCheckinsJob
-  include Sidekiq::Job
-
-  sidekiq_options queue: :default, retry: 3
+class ProcessCheckinsJob < ApplicationJob
+  queue_as :default
 
   def perform
     Rails.logger.info "[ProcessCheckinsJob] Starting check-in processing"
@@ -121,7 +119,7 @@ class ProcessCheckinsJob
       user.mark_delivered!
 
       # Trigger message delivery
-      DeliverMessagesJob.perform_async(user.id)
+      DeliverMessagesJob.perform_later(user.id)
 
       recipients = user.recipients.with_keys
         .joins(:messages)

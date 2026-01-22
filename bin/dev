@@ -5,18 +5,6 @@ if ! gem list foreman -i --silent; then
   gem install foreman
 fi
 
-# Start containers if not running
-if ! docker compose ps --status running | grep -q "db"; then
-  echo "Starting PostgreSQL and Redis..."
-  docker compose up -d db redis
-  sleep 2
-fi
-
-# Database environment
-export PGHOST="${PGHOST:-localhost}"
-export PGUSER="${PGUSER:-lastsignal}"
-export PGPASSWORD="${PGPASSWORD:-lastsignal_dev}"
-
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 

@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-class SendCheckinReminderJob
-  include Sidekiq::Job
-
-  sidekiq_options queue: :default, retry: 3
+class SendCheckinReminderJob < ApplicationJob
+  queue_as :default
 
   def perform(user_id)
     user = User.find(user_id)

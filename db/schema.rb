@@ -11,14 +11,11 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.0].define(version: 2026_01_21_090000) do
-  # These are extensions that must be enabled in order to support this database
-  enable_extension "pg_catalog.plpgsql"
-
   create_table "audit_logs", force: :cascade do |t|
     t.bigint "user_id"
     t.string "actor_type", null: false
     t.string "action", null: false
-    t.jsonb "metadata", default: {}
+    t.json "metadata", default: {}
     t.string "ip_hash"
     t.string "user_agent_hash"
     t.datetime "created_at", null: false
@@ -47,7 +44,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_090000) do
     t.string "message_id"
     t.string "recipient_email_hash"
     t.datetime "event_timestamp"
-    t.jsonb "raw_json", default: {}
+    t.json "raw_json", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_email_events_on_created_at"
@@ -100,7 +97,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_090000) do
     t.bigint "recipient_id", null: false
     t.text "public_key_b64u", null: false
     t.text "kdf_salt_b64u", null: false
-    t.jsonb "kdf_params", default: {}, null: false
+    t.json "kdf_params", default: {}, null: false
     t.integer "key_version", default: 1, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

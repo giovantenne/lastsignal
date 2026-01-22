@@ -1,7 +1,3 @@
 #!/usr/bin/env sh
 
-export PGHOST="${PGHOST:-localhost}"
-export PGUSER="${PGUSER:-lastsignal}"
-export PGPASSWORD="${PGPASSWORD:-lastsignal_dev}"
-
 exec bin/rails console

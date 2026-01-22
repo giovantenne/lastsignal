@@ -6,16 +6,15 @@ A self-hostable "dead man's switch" application. Users create encrypted messages
 ## Tech Stack
 
 - Ruby on Rails 8
-- PostgreSQL
-- Redis + Sidekiq (background jobs)
+- SQLite
+- Solid Queue + Solid Cache
 - Tailwind CSS
 - libsodium (client-side crypto)
 
 ## Requirements
 
 - Ruby 3.4+
-- PostgreSQL 16+
-- Redis 7+
+- SQLite 3 (sqlite3 gem >= 2.1)
 - Node.js (for Tailwind)
 
 ## Development Environment
@@ -36,14 +35,11 @@ cp .env.example .env
 
 ### 3. Run the setup script (recommended)
 
-Start the containers first:
-
 ```bash
-docker compose up -d db redis
 bin/setup
 ```
 
-The setup script installs dependencies, prepares the development and test databases, and clears logs/tempfiles. It uses default values for `PGHOST`, `PGUSER`, and `PGPASSWORD` if not set.
+The setup script installs dependencies, prepares the SQLite databases, and clears logs/tempfiles.
 
 ### Start the development stack
 
@@ -54,10 +50,9 @@ bin/dev
 ```
 
 This will automatically:
-- Start PostgreSQL and Redis containers (if not running)
 - Start Rails server on port 3000
 - Start Tailwind CSS watcher
-- Start Sidekiq worker
+- Start Solid Queue worker
 
 Then open http://localhost:3000
 
@@ -66,16 +61,13 @@ Then open http://localhost:3000
 If you prefer to start services separately:
 
 ```bash
-# Terminal 1: Start containers
-docker compose up -d db redis
+# Terminal 1: Start Rails
+bin/rails server
 
-# Terminal 2: Start Rails
-PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bin/rails server
+# Terminal 2: Start Solid Queue
+bin/rails solid_queue:start
 
-# Terminal 3: Start Sidekiq
-PGHOST=localhost PGUSER=lastsignal PGPASSWORD=lastsignal_dev bundle exec sidekiq
-
-# Terminal 4: Rails console (with DB env)
+# Terminal 3: Rails console
 bin/console
 ```
 
@@ -87,7 +79,6 @@ Run all tests with:
 bin/test
 ```
 
-This will automatically start the containers if needed.
 
 ### Test options
 
@@ -114,7 +105,7 @@ gem install kamal
 - Set `image` to your registry image name (e.g. `ghcr.io/you/lastsignal_app`).
 - Update `servers.web` with your host(s).
 - Set `proxy.host` to your public domain.
-- Ensure `env.clear` includes `APP_BASE_URL`, `SMTP_*`, and `REDIS_URL` if needed.
+- Ensure `env.clear` includes `APP_BASE_URL` and `SMTP_*` as needed.
 
 3) Create secrets in `.kamal/secrets`:
 ```bash
@@ -131,6 +122,8 @@ bin/kamal deploy
 5) Prepare the production database:
 ```bash
 bin/kamal app exec --interactive --reuse "bin/rails db:prepare"
+bin/kamal app exec --interactive --reuse "bin/rails db:prepare DATABASE=cache"
+bin/kamal app exec --interactive --reuse "bin/rails db:prepare DATABASE=queue"
 ```
 
 6) View logs:
@@ -149,8 +142,7 @@ All configuration lives in `.env.example`. Copy it to `.env` and edit values.
 - `RAILS_MASTER_KEY` - Production master key for credentials
 
 **Services**
-- `DATABASE_URL` - PostgreSQL connection string
-- `REDIS_URL` - Redis connection string
+- `DATABASE_URL` - Optional SQLite connection string override
 - `SMTP_*` - SMTP configuration for mail delivery
 
 **Authentication**

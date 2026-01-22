@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe MagicLinkToken, type: :model do
   describe "validations" do
-    subject { build(:magic_link_token) }
+    subject { create(:magic_link_token) }
 
     it { should validate_presence_of(:token_digest) }
     it { should validate_uniqueness_of(:token_digest) }
