@@ -113,9 +113,9 @@ Kamal is the supported path for production deployments. The steps below assume a
 You need a registry that supports pull access from the server.
 
 Common options:
-- GitHub Container Registry: `ghcr.io/ORG/lastsignal_app`
-- Docker Hub: `docker.io/ORG/lastsignal_app`
-- GitLab Registry: `registry.gitlab.com/ORG/lastsignal_app`
+- GitHub Container Registry: `ghcr.io/ORG/lastsignal`
+- Docker Hub: `docker.io/ORG/lastsignal`
+- GitLab Registry: `registry.gitlab.com/ORG/lastsignal`
 
 Create a registry token with read/write access. You will place it in `.env.production`.
 
@@ -162,21 +162,21 @@ Visit `/up` for the health check.
 #### 7) Backup the storage volume
 
 The default deployment stores the SQLite database and Active Storage files in the Docker volume
-`lastsignal_app_storage`. Make sure you back up this volume regularly (or mount a host path that is
+`lastsignal_storage`. Make sure you back up this volume regularly (or mount a host path that is
 already part of your backup strategy).
 
 Example backup command (creates a tarball in the current directory):
 
 ```bash
-docker run --rm -v lastsignal_app_storage:/data -v "$PWD":/backup alpine \
-  sh -c "cd /data && tar -czf /backup/lastsignal_app_storage.tgz ."
+docker run --rm -v lastsignal_storage:/data -v "$PWD":/backup alpine \
+  sh -c "cd /data && tar -czf /backup/lastsignal_storage.tgz ."
 ```
 
 Example restore command (from a tarball in the current directory):
 
 ```bash
-docker run --rm -v lastsignal_app_storage:/data -v "$PWD":/backup alpine \
-  sh -c "cd /data && tar -xzf /backup/lastsignal_app_storage.tgz"
+docker run --rm -v lastsignal_storage:/data -v "$PWD":/backup alpine \
+  sh -c "cd /data && tar -xzf /backup/lastsignal_storage.tgz"
 ```
 
 If you prefer host-based backups, mount a host path instead of a named volume by updating

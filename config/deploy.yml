@@ -8,7 +8,7 @@ end
 %>
 
 # Name of your application. Used to uniquely configure containers.
-service: lastsignal_app
+service: lastsignal
 
 # Name of the container image.
 image: <%= ENV.fetch("KAMAL_IMAGE") %>
@@ -71,7 +71,7 @@ env:
     # WEB_CONCURRENCY: 2
 
     # Match this to any external database server to configure Active Record correctly
-    # Use lastsignal_app-db for a db accessory server on same machine via local kamal docker network.
+    # Use lastsignal-db for a db accessory server on same machine via local kamal docker network.
     # DB_HOST: 192.168.0.2
 
     # Log everything from Rails
@@ -92,7 +92,7 @@ aliases:
 # Use a persistent storage volume for sqlite database files and local Active Storage files.
 # Recommended to change this to a mounted volume path that is backed up off server.
 volumes:
-  - "lastsignal_app_storage:/rails/storage"
+  - "lastsignal_storage:/rails/storage"
 
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
@@ -126,8 +126,8 @@ builder:
 #     port: "127.0.0.1:5432:5432"
 #     env:
 #       clear:
-#         POSTGRES_USER: lastsignal_app
-#         POSTGRES_DB: lastsignal_app_production
+#         POSTGRES_USER: lastsignal
+#         POSTGRES_DB: lastsignal_production
 #       secret:
 #         - POSTGRES_PASSWORD
 #     directories:
