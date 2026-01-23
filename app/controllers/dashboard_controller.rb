@@ -11,12 +11,13 @@ class DashboardController < ApplicationController
     @has_active_messages = current_user.has_active_messages?
 
     # Check if we need to show the recovery code
-    @show_recovery_code = session.delete(:show_recovery_code)
+    @show_recovery_code = session[:show_recovery_code]
   end
 
   # POST /dashboard/acknowledge_recovery_code
   def acknowledge_recovery_code
     current_user.mark_recovery_code_viewed!
+    session.delete(:show_recovery_code)
     flash[:notice] = "Recovery code saved. Keep it in a safe place!"
     redirect_to dashboard_path
   end

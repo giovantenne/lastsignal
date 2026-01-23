@@ -7,20 +7,19 @@ class TrustedContact < ApplicationRecord
   validates :user_id, uniqueness: true
   validates :ping_interval_hours,
             numericality: {
-              only_integer: true,
-              greater_than_or_equal_to: ->(_) { AppConfig.trusted_contact_min_ping_interval_hours },
-              less_than_or_equal_to: ->(_) { AppConfig.trusted_contact_max_ping_interval_hours }
+              only_integer: true
             },
             allow_nil: true
   validates :pause_duration_hours,
             numericality: {
-              only_integer: true,
-              greater_than_or_equal_to: ->(_) { AppConfig.trusted_contact_min_pause_duration_hours },
-              less_than_or_equal_to: ->(_) { AppConfig.trusted_contact_max_pause_duration_hours }
+              only_integer: true
             },
             allow_nil: true
 
   before_validation :normalize_email
+
+  validate :ping_interval_days_range
+  validate :pause_duration_days_range
 
   def self.find_by_token(raw_token)
     return nil if raw_token.blank?
@@ -74,6 +73,37 @@ class TrustedContact < ApplicationRecord
 
   def normalize_email
     self.email = email&.downcase&.strip
+  end
+
+  def ping_interval_days_range
+    validate_days_range(
+      value: ping_interval_hours,
+      min_hours: AppConfig.trusted_contact_min_ping_interval_hours,
+      max_hours: AppConfig.trusted_contact_max_ping_interval_hours,
+      attribute: :ping_interval_days
+    )
+  end
+
+  def pause_duration_days_range
+    validate_days_range(
+      value: pause_duration_hours,
+      min_hours: AppConfig.trusted_contact_min_pause_duration_hours,
+      max_hours: AppConfig.trusted_contact_max_pause_duration_hours,
+      attribute: :pause_duration_days
+    )
+  end
+
+  def validate_days_range(value:, min_hours:, max_hours:, attribute:)
+    return if value.nil?
+
+    min_days = (min_hours / 24.0).round
+    max_days = (max_hours / 24.0).round
+
+    if value < min_hours
+      errors.add(attribute, "must be at least #{min_days} days")
+    elsif value > max_hours
+      errors.add(attribute, "must be at most #{max_days} days")
+    end
   end
 
   def self.digest(raw_token)

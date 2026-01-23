@@ -26,25 +26,19 @@ class User < ApplicationRecord
 
   validates :checkin_interval_hours,
             numericality: {
-              only_integer: true,
-              greater_than_or_equal_to: ->(u) { AppConfig.checkin_min_interval_hours },
-              less_than_or_equal_to: ->(u) { AppConfig.checkin_max_interval_hours }
+              only_integer: true
             },
             allow_nil: true
 
   validates :grace_period_hours,
             numericality: {
-              only_integer: true,
-              greater_than_or_equal_to: ->(u) { AppConfig.checkin_min_grace_hours },
-              less_than_or_equal_to: ->(u) { AppConfig.checkin_max_grace_hours }
+              only_integer: true
             },
             allow_nil: true
 
   validates :cooldown_period_hours,
             numericality: {
-              only_integer: true,
-              greater_than_or_equal_to: ->(u) { AppConfig.checkin_min_cooldown_hours },
-              less_than_or_equal_to: ->(u) { AppConfig.checkin_max_cooldown_hours }
+              only_integer: true
             },
             allow_nil: true
 
@@ -53,6 +47,10 @@ class User < ApplicationRecord
   before_create :set_default_intervals
   after_create :schedule_first_checkin
   after_create :generate_recovery_code!
+
+  validate :checkin_interval_days_range
+  validate :grace_period_days_range
+  validate :cooldown_period_days_range
 
   accepts_nested_attributes_for :trusted_contact,
                                 allow_destroy: true,
@@ -88,6 +86,46 @@ class User < ApplicationRecord
       "datetime(#{column}, '+' || #{hours_sql} || ' hours')"
     else
       "#{column} + (#{hours_sql} * INTERVAL '1 hour')"
+    end
+  end
+
+  def checkin_interval_days_range
+    validate_days_range(
+      value: checkin_interval_hours,
+      min_hours: AppConfig.checkin_min_interval_hours,
+      max_hours: AppConfig.checkin_max_interval_hours,
+      attribute: :checkin_interval_days
+    )
+  end
+
+  def grace_period_days_range
+    validate_days_range(
+      value: grace_period_hours,
+      min_hours: AppConfig.checkin_min_grace_hours,
+      max_hours: AppConfig.checkin_max_grace_hours,
+      attribute: :grace_period_days
+    )
+  end
+
+  def cooldown_period_days_range
+    validate_days_range(
+      value: cooldown_period_hours,
+      min_hours: AppConfig.checkin_min_cooldown_hours,
+      max_hours: AppConfig.checkin_max_cooldown_hours,
+      attribute: :cooldown_period_days
+    )
+  end
+
+  def validate_days_range(value:, min_hours:, max_hours:, attribute:)
+    return if value.nil?
+
+    min_days = (min_hours / 24.0).round
+    max_days = (max_hours / 24.0).round
+
+    if value < min_hours
+      errors.add(attribute, "must be at least #{min_days} days")
+    elsif value > max_hours
+      errors.add(attribute, "must be at most #{max_days} days")
     end
   end
 
