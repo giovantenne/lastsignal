@@ -17,7 +17,8 @@ class SendCheckinReminderJob < ApplicationJob
 
       return if user.checkin_reminder_sent_at.present?
 
-      raw_token = generate_checkin_token(user)
+      grace_ends_at = user.next_checkin_at + user.effective_grace_period_hours.hours
+      raw_token = generate_checkin_token(user, expires_at: grace_ends_at)
       CheckinMailer.reminder(user, raw_token).deliver_later
 
       user.update_column(:checkin_reminder_sent_at, Time.current)
@@ -36,11 +37,14 @@ class SendCheckinReminderJob < ApplicationJob
 
   private
 
-  def generate_checkin_token(user)
+  def generate_checkin_token(user, expires_at:)
     raw_token = SecureRandom.urlsafe_base64(32)
     token_digest = Digest::SHA256.hexdigest(raw_token)
 
-    user.update_column(:checkin_token_digest, token_digest)
+    user.update_columns(
+      checkin_token_digest: token_digest,
+      checkin_token_expires_at: expires_at
+    )
 
     raw_token
   end

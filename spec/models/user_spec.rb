@@ -13,19 +13,19 @@ RSpec.describe User, type: :model do
     it { should_not allow_value("invalid@").for(:email) }
 
     it "validates checkin_interval_hours within bounds" do
-      user = build(:user, checkin_interval_hours: 1)
+      user = build(:user, checkin_interval_hours: 0)
       expect(user).not_to be_valid
       expect(user.errors[:checkin_interval_hours]).to be_present
     end
 
     it "validates grace_period_hours within bounds" do
-      user = build(:user, grace_period_hours: 1)
+      user = build(:user, grace_period_hours: 0)
       expect(user).not_to be_valid
       expect(user.errors[:grace_period_hours]).to be_present
     end
 
     it "validates cooldown_period_hours within bounds" do
-      user = build(:user, cooldown_period_hours: 1)
+      user = build(:user, cooldown_period_hours: 0)
       expect(user).not_to be_valid
       expect(user.errors[:cooldown_period_hours]).to be_present
     end

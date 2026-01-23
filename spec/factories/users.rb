@@ -46,6 +46,8 @@ FactoryBot.define do
     trait :with_checkin_tokens do
       checkin_token_digest { Digest::SHA256.hexdigest(SecureRandom.urlsafe_base64(32)) }
       panic_token_digest { Digest::SHA256.hexdigest(SecureRandom.urlsafe_base64(32)) }
+      checkin_token_expires_at { 1.hour.from_now }
+      panic_token_expires_at { 1.hour.from_now }
     end
   end
 end

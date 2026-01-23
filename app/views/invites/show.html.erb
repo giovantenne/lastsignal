@@ -107,8 +107,7 @@
 
 <script type="module" nonce="<%= request.content_security_policy_nonce %>">
   // Use sumo version for crypto_pwhash (Argon2) support
-  import sodiumModule from 'https://cdn.jsdelivr.net/npm/libsodium-wrappers-sumo@0.7.13/+esm';
-  const sodium = sodiumModule;
+  import sodium from 'libsodium-wrappers-sumo';
 
   async function handleSubmit() {
     const passphrase = document.getElementById('passphrase').value;

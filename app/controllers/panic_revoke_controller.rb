@@ -11,6 +11,27 @@ class PanicRevokeController < ApplicationController
     @user = User.find_by(panic_token_digest: token_digest)
 
     if @user.nil?
+      AuditLog.log(
+        action: "panic_revoke_token_invalid",
+        actor_type: "user",
+        metadata: { reason: "not_found" },
+        request: request
+      )
+      flash[:alert] = "Invalid or expired panic revoke link."
+      redirect_to login_path
+      return
+    end
+
+    if @user.panic_token_expires_at.blank? || @user.panic_token_expires_at <= Time.current
+      AuditLog.log(
+        action: "panic_revoke_token_invalid",
+        user: @user,
+        actor_type: "user",
+        metadata: { reason: "expired" },
+        request: request
+      )
+
+      @user.update_columns(panic_token_digest: nil, panic_token_expires_at: nil)
       flash[:alert] = "Invalid or expired panic revoke link."
       redirect_to login_path
       return
@@ -33,6 +54,27 @@ class PanicRevokeController < ApplicationController
     user = User.find_by(panic_token_digest: token_digest)
 
     if user.nil?
+      AuditLog.log(
+        action: "panic_revoke_token_invalid",
+        actor_type: "user",
+        metadata: { reason: "not_found" },
+        request: request
+      )
+      flash[:alert] = "Invalid or expired panic revoke link."
+      redirect_to login_path
+      return
+    end
+
+    if user.panic_token_expires_at.blank? || user.panic_token_expires_at <= Time.current
+      AuditLog.log(
+        action: "panic_revoke_token_invalid",
+        user: user,
+        actor_type: "user",
+        metadata: { reason: "expired" },
+        request: request
+      )
+
+      user.update_columns(panic_token_digest: nil, panic_token_expires_at: nil)
       flash[:alert] = "Invalid or expired panic revoke link."
       redirect_to login_path
       return
@@ -46,9 +88,6 @@ class PanicRevokeController < ApplicationController
 
     # Execute panic revoke
     user.panic_revoke!
-
-    # Clear the token
-    user.update_column(:panic_token_digest, nil)
 
     AuditLog.log(
       action: "panic_revoke_used",

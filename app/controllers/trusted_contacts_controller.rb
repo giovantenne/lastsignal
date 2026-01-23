@@ -8,6 +8,12 @@ class TrustedContactsController < ApplicationController
     @trusted_contact = TrustedContact.find_by_token(params[:token])
 
     if @trusted_contact.nil?
+      AuditLog.log(
+        action: "trusted_contact_token_invalid",
+        actor_type: "trusted_contact",
+        metadata: { reason: "not_found" },
+        request: request
+      )
       flash[:alert] = "Invalid or expired trusted contact link."
       redirect_to login_path
       return
@@ -21,6 +27,12 @@ class TrustedContactsController < ApplicationController
     trusted_contact = TrustedContact.find_by_token(params[:token])
 
     if trusted_contact.nil?
+      AuditLog.log(
+        action: "trusted_contact_token_invalid",
+        actor_type: "trusted_contact",
+        metadata: { reason: "not_found" },
+        request: request
+      )
       flash[:alert] = "Invalid or expired trusted contact link."
       redirect_to login_path
       return

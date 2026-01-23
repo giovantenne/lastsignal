@@ -33,6 +33,14 @@ Rails.application.configure do
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
+  # Enable HSTS with subdomains and preload for strict HTTPS
+  config.ssl_options = {
+    hsts: {
+      subdomains: true,
+      preload: true
+    }
+  }
+
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
   config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)

@@ -16,9 +16,6 @@ class CheckinsController < ApplicationController
   def complete
     @user.confirm_checkin!
 
-    # Clear the token
-    @user.update_column(:checkin_token_digest, nil)
-
     AuditLog.log(
       action: "checkin_confirmed",
       user: @user,
@@ -40,11 +37,36 @@ class CheckinsController < ApplicationController
     token = params[:token].presence || params[:checkin_token].presence
     token_digest = Digest::SHA256.hexdigest(token.to_s)
 
-    @user = User.find_by(checkin_token_digest: token_digest)
+    user = User.find_by(checkin_token_digest: token_digest)
 
-    return if @user
+    if user.nil?
+      AuditLog.log(
+        action: "checkin_token_invalid",
+        actor_type: "user",
+        metadata: { reason: "not_found" },
+        request: request
+      )
 
-    flash[:alert] = "Invalid or expired check-in link."
-    redirect_to login_path
+      flash[:alert] = "Invalid or expired check-in link."
+      redirect_to login_path
+      return
+    end
+
+    if user.checkin_token_expires_at.blank? || user.checkin_token_expires_at <= Time.current
+      AuditLog.log(
+        action: "checkin_token_invalid",
+        user: user,
+        actor_type: "user",
+        metadata: { reason: "expired" },
+        request: request
+      )
+
+      user.update_columns(checkin_token_digest: nil, checkin_token_expires_at: nil)
+      flash[:alert] = "Invalid or expired check-in link."
+      redirect_to login_path
+      return
+    end
+
+    @user = user
   end
 end

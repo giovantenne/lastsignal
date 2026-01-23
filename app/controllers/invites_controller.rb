@@ -9,12 +9,25 @@ class InvitesController < ApplicationController
     @recipient = Recipient.find_by_invite_token(params[:token])
 
     if @recipient.nil?
+      AuditLog.log(
+        action: "invite_token_invalid",
+        actor_type: "recipient",
+        metadata: { reason: "not_found" },
+        request: request
+      )
       flash[:alert] = "Invalid invite link."
       redirect_to login_path
       return
     end
 
     unless @recipient.invite_valid?
+      AuditLog.log(
+        action: "invite_token_invalid",
+        user: @recipient.user,
+        actor_type: "recipient",
+        metadata: { reason: "expired" },
+        request: request
+      )
       if @recipient.accepted?
         flash[:notice] = "You've already accepted this invite."
       else
@@ -34,11 +47,24 @@ class InvitesController < ApplicationController
     @recipient = Recipient.find_by_invite_token(params[:token])
 
     if @recipient.nil?
+      AuditLog.log(
+        action: "invite_token_invalid",
+        actor_type: "recipient",
+        metadata: { reason: "not_found" },
+        request: request
+      )
       render json: { error: "Invalid invite link." }, status: :not_found
       return
     end
 
     unless @recipient.invite_valid?
+      AuditLog.log(
+        action: "invite_token_invalid",
+        user: @recipient.user,
+        actor_type: "recipient",
+        metadata: { reason: "expired" },
+        request: request
+      )
       render json: { error: "This invite has expired or was already used." }, status: :gone
       return
     end

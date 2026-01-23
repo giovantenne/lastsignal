@@ -30,7 +30,8 @@ class ProcessCheckinsJob < ApplicationJob
         next unless user.next_checkin_at > Time.current
         next if user.checkin_reminder_sent_at.present?
 
-        raw_token = generate_checkin_token(user)
+        grace_ends_at = user.next_checkin_at + user.effective_grace_period_hours.hours
+        raw_token = generate_checkin_token(user, expires_at: grace_ends_at)
         CheckinMailer.reminder(user, raw_token).deliver_later
 
         user.update_column(:checkin_reminder_sent_at, Time.current)
@@ -61,7 +62,7 @@ class ProcessCheckinsJob < ApplicationJob
         # Send grace period notification with check-in link
         next if user.grace_warning_sent_at.present?
 
-        raw_token = generate_checkin_token(user)
+        raw_token = generate_checkin_token(user, expires_at: user.grace_ends_at)
         CheckinMailer.grace_period_warning(user, raw_token).deliver_later
 
         user.update_column(:grace_warning_sent_at, Time.current)
@@ -99,7 +100,7 @@ class ProcessCheckinsJob < ApplicationJob
         next if user.cooldown_warning_sent_at.present?
 
         # Generate panic revoke token and send email
-        raw_token = generate_panic_token(user)
+        raw_token = generate_panic_token(user, expires_at: user.cooldown_ends_at)
         CheckinMailer.cooldown_warning(user, raw_token).deliver_later
 
         user.update_column(:cooldown_warning_sent_at, Time.current)
@@ -164,6 +165,18 @@ class ProcessCheckinsJob < ApplicationJob
 
         if user.trusted_contact_pause_active?
           Rails.logger.info "[ProcessCheckinsJob] User #{user.id} cooldown expired but trusted contact pause is active"
+          contact = user.trusted_contact
+
+          safe_audit_log(
+            action: "delivery_blocked_by_trusted_contact",
+            user: user,
+            actor_type: "system",
+            metadata: {
+              trusted_contact_id: contact&.id,
+              paused_until: contact&.paused_until&.iso8601,
+              cooldown_ends_at: user.cooldown_ends_at&.iso8601
+            }
+          )
           next
         end
 
@@ -203,22 +216,28 @@ class ProcessCheckinsJob < ApplicationJob
     end
   end
 
-  def generate_panic_token(user)
+  def generate_panic_token(user, expires_at:)
     # Store panic token for verification
     raw_token = SecureRandom.urlsafe_base64(32)
     token_digest = Digest::SHA256.hexdigest(raw_token)
 
     # Store in user record (we'll add this column or use a separate table)
-    user.update_column(:panic_token_digest, token_digest)
+    user.update_columns(
+      panic_token_digest: token_digest,
+      panic_token_expires_at: expires_at
+    )
 
     raw_token
   end
 
-  def generate_checkin_token(user)
+  def generate_checkin_token(user, expires_at:)
     raw_token = SecureRandom.urlsafe_base64(32)
     token_digest = Digest::SHA256.hexdigest(raw_token)
 
-    user.update_column(:checkin_token_digest, token_digest)
+    user.update_columns(
+      checkin_token_digest: token_digest,
+      checkin_token_expires_at: expires_at
+    )
 
     raw_token
   end

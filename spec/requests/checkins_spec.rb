@@ -6,7 +6,11 @@ RSpec.describe "Check-ins", type: :request do
   describe "GET /checkin/confirm/:token" do
     it "renders confirmation page without confirming" do
       raw_token = SecureRandom.urlsafe_base64(32)
-      user = create(:user, checkin_token_digest: Digest::SHA256.hexdigest(raw_token))
+      user = create(
+        :user,
+        checkin_token_digest: Digest::SHA256.hexdigest(raw_token),
+        checkin_token_expires_at: 1.hour.from_now
+      )
 
       get confirm_checkin_path(token: raw_token)
 
@@ -27,7 +31,11 @@ RSpec.describe "Check-ins", type: :request do
   describe "POST /checkin/confirm/:token" do
     it "confirms check-in and clears token" do
       raw_token = SecureRandom.urlsafe_base64(32)
-      user = create(:user, checkin_token_digest: Digest::SHA256.hexdigest(raw_token))
+      user = create(
+        :user,
+        checkin_token_digest: Digest::SHA256.hexdigest(raw_token),
+        checkin_token_expires_at: 1.hour.from_now
+      )
 
       post complete_checkin_path(token: raw_token)
 

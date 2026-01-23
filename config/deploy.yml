@@ -1,8 +1,17 @@
+<%
+File.readlines(".env.production").each do |line|
+  next if line.strip.empty? || line.strip.start_with?("#")
+  key, value = line.split("=", 2)
+  next if key.nil? || value.nil?
+  ENV[key] ||= value.strip
+end
+%>
+
 # Name of your application. Used to uniquely configure containers.
 service: lastsignal_app
 
 # Name of the container image.
-image: ghcr.io/giovantenne/lastsignal_app
+image: <%= ENV.fetch("KAMAL_IMAGE") %>
 
 # Load secrets directly from .env.production (and .env.production-common if present).
 secrets_path: .env.production
@@ -10,7 +19,9 @@ secrets_path: .env.production
 # Deploy to these servers.
 servers:
   web:
-    - 68.183.213.22
+<% ENV.fetch("KAMAL_SERVERS").split(",").map(&:strip).reject(&:empty?).each do |host| %>
+    - <%= host %>
+<% end %>
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -22,20 +33,20 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: lastsignal.benve.it
+  host: <%= ENV.fetch("KAMAL_PROXY_HOST", ENV.fetch("APP_HOST")) %>
 
 # Credentials for your image host.
 registry:
   # Specify the registry server, if you're not using Docker Hub
   # server: registry.digitalocean.com / ghcr.io / ...
-  server: ghcr.io
-  username: giovantenne
+  server: <%= ENV.fetch("KAMAL_REGISTRY_SERVER", "ghcr.io") %>
+  username: <%= ENV.fetch("KAMAL_REGISTRY_USERNAME") %>
 
   # Always use an access token rather than real password when possible.
   password:
     - KAMAL_REGISTRY_PASSWORD
 
-# Inject ENV variables into containers (secrets come from .kamal/secrets).
+# Inject ENV variables into containers (secrets come from .env.production).
 env:
   secret:
     - RAILS_MASTER_KEY
@@ -65,30 +76,9 @@ env:
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
-    APP_BASE_URL: https://lastsignal.benve.it
-    APP_HOST: lastsignal.benve.it
-    MAGIC_LINK_TTL_MINUTES: 15
-    INVITE_TOKEN_TTL_DAYS: 7
-    RATE_LIMIT_MAGIC_LINK_PER_IP: 5
-    RATE_LIMIT_MAGIC_LINK_PERIOD: 300
-    ARGON2ID_OPS_LIMIT: 3
-    ARGON2ID_MEM_LIMIT: 268435456
-    CHECKIN_DEFAULT_INTERVAL_HOURS: 168
-    CHECKIN_DEFAULT_GRACE_HOURS: 72
-    CHECKIN_DEFAULT_COOLDOWN_HOURS: 48
-    CHECKIN_MIN_INTERVAL_HOURS: 24
-    CHECKIN_MIN_GRACE_HOURS: 24
-    CHECKIN_MIN_COOLDOWN_HOURS: 24
-    CHECKIN_MAX_INTERVAL_HOURS: 8760
-    CHECKIN_MAX_GRACE_HOURS: 720
-    CHECKIN_MAX_COOLDOWN_HOURS: 720
-    TRUSTED_CONTACT_DEFAULT_PING_INTERVAL_HOURS: 24
-    TRUSTED_CONTACT_DEFAULT_PAUSE_DURATION_HOURS: 168
-    TRUSTED_CONTACT_MIN_PING_INTERVAL_HOURS: 12
-    TRUSTED_CONTACT_MAX_PING_INTERVAL_HOURS: 720
-    TRUSTED_CONTACT_MIN_PAUSE_DURATION_HOURS: 24
-    TRUSTED_CONTACT_MAX_PAUSE_DURATION_HOURS: 720
-    TRUSTED_CONTACT_TOKEN_TTL_HOURS: 168
+    APP_BASE_URL: <%= ENV.fetch("APP_BASE_URL") %>
+    APP_HOST: <%= ENV.fetch("APP_HOST") %>
+    ALLOWED_EMAILS: <%= ENV.fetch("ALLOWED_EMAILS", "") %>
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r job" will tail logs from the first server in the job section.
@@ -128,7 +118,12 @@ builder:
 # ssh:
 #   user: app
 
-# Use accessory services (secrets come from .kamal/secrets).
+# Automatically run migrations before deploy
+hooks:
+  pre-deploy:
+    - bin/rails db:migrate
+
+# Use accessory services (secrets come from .env.production).
 # accessories:
 #   db:
 #     image: postgres:16

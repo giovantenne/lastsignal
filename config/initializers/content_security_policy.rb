@@ -41,6 +41,6 @@ Rails.application.configure do
     config.content_security_policy_nonce_directives = %w[script-src]
   end
 
-  # Report violations without enforcing the policy (set to false in production).
-  # config.content_security_policy_report_only = true
+  # Report violations without enforcing the policy.
+  config.content_security_policy_report_only = AppDefaults::CSP_REPORT_ONLY
 end

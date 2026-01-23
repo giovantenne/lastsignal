@@ -69,7 +69,6 @@ class AuthController < ApplicationController
 
       # Treat login as a check-in
       token.user.confirm_checkin!
-      token.user.update_column(:checkin_token_digest, nil)
 
       AuditLog.log(
         action: "login_success",

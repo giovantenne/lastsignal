@@ -110,7 +110,11 @@ class User < ApplicationRecord
       delivery_notice_sent_at: nil,
       grace_started_at: nil,
       cooldown_started_at: nil,
-      delivered_at: nil
+      delivered_at: nil,
+      checkin_token_digest: nil,
+      checkin_token_expires_at: nil,
+      panic_token_digest: nil,
+      panic_token_expires_at: nil
     )
   end
 
@@ -132,7 +136,9 @@ class User < ApplicationRecord
 
     update!(
       state: :cooldown,
-      cooldown_started_at: Time.current
+      cooldown_started_at: Time.current,
+      checkin_token_digest: nil,
+      checkin_token_expires_at: nil
     )
   end
 
@@ -142,7 +148,11 @@ class User < ApplicationRecord
 
     update!(
       state: :delivered,
-      delivered_at: Time.current
+      delivered_at: Time.current,
+      panic_token_digest: nil,
+      panic_token_expires_at: nil,
+      checkin_token_digest: nil,
+      checkin_token_expires_at: nil
     )
   end
 
@@ -162,7 +172,11 @@ class User < ApplicationRecord
       state: :paused,
       grace_started_at: nil,
       cooldown_started_at: nil,
-      next_checkin_at: nil
+      next_checkin_at: nil,
+      checkin_token_digest: nil,
+      checkin_token_expires_at: nil,
+      panic_token_digest: nil,
+      panic_token_expires_at: nil
     )
   end
 
@@ -174,7 +188,11 @@ class User < ApplicationRecord
       state: :paused,
       grace_started_at: nil,
       cooldown_started_at: nil,
-      next_checkin_at: nil
+      next_checkin_at: nil,
+      checkin_token_digest: nil,
+      checkin_token_expires_at: nil,
+      panic_token_digest: nil,
+      panic_token_expires_at: nil
     )
   end
 

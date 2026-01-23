@@ -92,72 +92,123 @@ bin/test --format documentation         # Detailed output
 
 ## Production Deployment
 
-### Deploy with Kamal
+### Deploy with Kamal (recommended)
 
-Kamal is the recommended path for production deployments.
+Kamal is the supported path for production deployments. The steps below assume a single server and a container registry.
 
-1) Install Kamal (once per workstation):
+#### Files you will edit
+
+- `.env.production` (deployment + runtime env vars)
+
+`config/deploy.yml` is now generic and reads from `.env.production`, so you typically do not edit it.
+
+#### 1) Prepare the server
+
+- Provision a Linux host (Ubuntu 22.04+ recommended).
+- Install Docker and open ports 80/443.
+- Point DNS to the server IP (A/AAAA records).
+
+#### 2) Set up a container registry
+
+You need a registry that supports pull access from the server.
+
+Common options:
+- GitHub Container Registry: `ghcr.io/ORG/lastsignal_app`
+- Docker Hub: `docker.io/ORG/lastsignal_app`
+- GitLab Registry: `registry.gitlab.com/ORG/lastsignal_app`
+
+Create a registry token with read/write access. You will place it in `.env.production`.
+
+#### 3) Configure `.env.production`
+
+Copy `.env.production.example` to `.env.production` and fill in:
+
+- `KAMAL_*` (image, registry, server, domain)
+- `APP_BASE_URL` and `APP_HOST`
+- `SMTP_*` (see email deliverability below)
+- `ALLOWED_EMAILS` (optional allowlist for private instances)
+- `EMAIL_WEBHOOK_SECRET` (optional)
+
+Generate a master key if you don’t have one:
+
 ```bash
-gem install kamal
+bin/rails credentials:edit
 ```
 
-2) Configure `config/deploy.yml`:
-- Set `image` to your registry image name (e.g. `ghcr.io/you/lastsignal_app`).
-- Update `servers.web` with your host(s).
-- Set `proxy.host` to your public domain.
-- Ensure `env.clear` includes `APP_BASE_URL` and `SMTP_*` as needed.
+#### 4) Deploy
 
-3) Create secrets in `.kamal/secrets`:
-```bash
-KAMAL_REGISTRY_PASSWORD=your-registry-token
-RAILS_MASTER_KEY=your-master-key
-```
-
-4) Build and deploy:
 ```bash
 bin/kamal setup
 bin/kamal deploy
 ```
 
-5) Prepare the production database:
+`bin/kamal deploy` runs `bin/rails db:migrate` automatically (see `config/deploy.yml` hooks).
+
+#### 5) Prepare the production database
+
 ```bash
 bin/kamal app exec --interactive --reuse "bin/rails db:prepare"
 bin/kamal app exec --interactive --reuse "bin/rails db:prepare DATABASE=cache"
 bin/kamal app exec --interactive --reuse "bin/rails db:prepare DATABASE=queue"
 ```
 
-6) View logs:
+#### 6) Verify and monitor
+
 ```bash
 bin/kamal logs
 ```
 
-### Environment Variables
+Visit `/up` for the health check.
 
-All configuration lives in `.env.example`. Copy it to `.env` and edit values.
+#### 7) Backup the storage volume
 
-**Core**
-- `APP_BASE_URL` - Base URL for link generation
-- `APP_HOST` - Hostname for DNS rebinding protection and email links
-- `SECRET_KEY_BASE` - Generate with `bin/rails secret`
-- `RAILS_MASTER_KEY` - Production master key for credentials
+The default deployment stores the SQLite database and Active Storage files in the Docker volume
+`lastsignal_app_storage`. Make sure you back up this volume regularly (or mount a host path that is
+already part of your backup strategy).
 
-**Services**
-- `DATABASE_URL` - Optional SQLite connection string override
-- `SMTP_*` - SMTP configuration for mail delivery
+Example backup command (creates a tarball in the current directory):
 
-**Authentication**
-- `MAGIC_LINK_TTL_MINUTES` - Magic link expiration window
-- `ALLOWED_EMAILS` - Optional comma-separated allowlist for private instances
+```bash
+docker run --rm -v lastsignal_app_storage:/data -v "$PWD":/backup alpine \
+  sh -c "cd /data && tar -czf /backup/lastsignal_app_storage.tgz ."
+```
 
-**Check-in Engine**
-- `CHECKIN_DEFAULT_*` - Defaults applied to new users
-- `CHECKIN_MIN_*` / `CHECKIN_MAX_*` - Bounds for user settings
+Example restore command (from a tarball in the current directory):
 
-**Security / Integrations**
-- `ARGON2ID_OPS_LIMIT`, `ARGON2ID_MEM_LIMIT` - Client-side KDF parameters
-- `EMAIL_WEBHOOK_SECRET` - Optional webhook authentication secret
+```bash
+docker run --rm -v lastsignal_app_storage:/data -v "$PWD":/backup alpine \
+  sh -c "cd /data && tar -xzf /backup/lastsignal_app_storage.tgz"
+```
 
-Refer to `.env.example` for the full list and inline comments.
+If you prefer host-based backups, mount a host path instead of a named volume by updating
+`volumes` in `config/deploy.yml` (example):
+
+```yaml
+volumes:
+  - "/var/lib/lastsignal/storage:/rails/storage"
+```
+
+### Email deliverability checklist
+
+To avoid spam filtering, configure DNS for your SMTP domain:
+
+- **SPF**: authorize your SMTP provider to send on your domain
+- **DKIM**: enable DKIM signing in the provider and add the DNS record
+- **DMARC**: set at least `p=none` to monitor, then tighten to `quarantine` or `reject`
+- **From address**: use a domain you control (matches `SMTP_FROM_EMAIL`)
+
+Most providers (Postmark, SES, Mailgun) give exact DNS records to copy.
+
+### Defaults
+
+Timing, rate-limit, and crypto defaults live in `config/initializers/app_defaults.rb`. Update that file to change:
+
+- Check-in interval, grace, cooldown defaults and bounds
+- Magic link TTL and invite token TTL
+- Trusted contact ping/pause defaults and bounds
+- Rate limiting thresholds
+- Argon2id KDF parameters
+- CSP report-only toggle
 
 
 ## License

@@ -23,6 +23,7 @@ class AuditLog < ApplicationRecord
     grace_warning_sent
     cooldown_warning_sent
     delivery_notice_sent
+    delivery_blocked_by_trusted_contact
     panic_revoke_used
     emergency_stop
     delivery_link_opened
@@ -30,12 +31,17 @@ class AuditLog < ApplicationRecord
     trusted_contact_ping_notice_sent
     trusted_contact_confirmed
     trusted_contact_confirmation_notice_sent
+    trusted_contact_token_invalid
     magic_link_sent
     recipient_invite_sent
     recipient_delivery_sent
     message_decrypted
     account_updated
     account_deleted
+    checkin_token_invalid
+    panic_revoke_token_invalid
+    delivery_token_invalid
+    invite_token_invalid
   ].freeze
 
   validates :actor_type, presence: true, inclusion: { in: ACTOR_TYPES }

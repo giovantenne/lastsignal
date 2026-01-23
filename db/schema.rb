@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_22_193000) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_23_090537) do
   create_table "audit_logs", force: :cascade do |t|
     t.bigint "user_id"
     t.string "actor_type", null: false
@@ -159,6 +159,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_193000) do
     t.datetime "grace_warning_sent_at"
     t.datetime "cooldown_warning_sent_at"
     t.datetime "delivery_notice_sent_at"
+    t.datetime "checkin_token_expires_at"
+    t.datetime "panic_token_expires_at"
     t.index ["checkin_token_digest"], name: "index_users_on_checkin_token_digest", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["next_checkin_at"], name: "index_users_on_next_checkin_at"

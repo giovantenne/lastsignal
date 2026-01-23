@@ -28,5 +28,7 @@ Rails.application.config.filter_parameters += [
   :invite_token,
   :delivery_token,
   :panic_revoke_token,
-  :checkin_confirm_token
+  :checkin_confirm_token,
+  :recovery_code,
+  :recovery_code_confirmation
 ]

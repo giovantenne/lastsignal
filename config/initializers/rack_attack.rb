@@ -24,6 +24,13 @@ class Rack::Attack
     end
   end
 
+  # Throttle login page by IP
+  throttle("login/ip", limit: 30, period: 60) do |req|
+    if req.path == "/auth/login" && req.get?
+      req.ip
+    end
+  end
+
   # Throttle invite accept by IP
   throttle("invite_accept/ip", limit: 10, period: 60) do |req|
     if req.path.start_with?("/invites/") && req.post?
@@ -31,9 +38,23 @@ class Rack::Attack
     end
   end
 
+  # Throttle invite view by IP
+  throttle("invite_view/ip", limit: 30, period: 60) do |req|
+    if req.path.start_with?("/invites/") && req.get?
+      req.ip
+    end
+  end
+
   # Throttle delivery page by IP
   throttle("delivery/ip", limit: 30, period: 60) do |req|
-    if req.path.start_with?("/delivery/") && req.get?
+    if req.path.start_with?("/delivery/") && req.get? && !req.path.end_with?("/payload")
+      req.ip
+    end
+  end
+
+  # Throttle delivery payload fetch by IP
+  throttle("delivery_payload/ip", limit: 30, period: 60) do |req|
+    if req.path.start_with?("/delivery/") && req.path.end_with?("/payload") && req.get?
       req.ip
     end
   end
@@ -52,9 +73,23 @@ class Rack::Attack
     end
   end
 
+  # Throttle check-in confirm by IP
+  throttle("checkin_confirm/ip", limit: 20, period: 60) do |req|
+    if req.path.start_with?("/checkin/confirm/") && (req.get? || req.post?)
+      req.ip
+    end
+  end
+
   # Throttle emergency stop by IP (strict - potential brute force target)
   throttle("emergency/ip", limit: 5, period: 300) do |req|
     if req.path == "/emergency" && req.post?
+      req.ip
+    end
+  end
+
+  # Throttle emergency stop form by IP
+  throttle("emergency_form/ip", limit: 20, period: 60) do |req|
+    if req.path == "/emergency" && req.get?
       req.ip
     end
   end

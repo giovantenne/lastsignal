@@ -8,6 +8,12 @@ class DeliveryController < ApplicationController
     @delivery_token = DeliveryToken.find_by_token(params[:token])
 
     if @delivery_token.nil?
+      AuditLog.log(
+        action: "delivery_token_invalid",
+        actor_type: "recipient",
+        metadata: { reason: "not_found" },
+        request: request
+      )
       flash[:alert] = "Invalid or revoked delivery link."
       redirect_to login_path
       return
@@ -35,6 +41,12 @@ class DeliveryController < ApplicationController
     delivery_token = DeliveryToken.find_by_token(params[:token])
 
     if delivery_token.nil?
+      AuditLog.log(
+        action: "delivery_token_invalid",
+        actor_type: "recipient",
+        metadata: { reason: "not_found" },
+        request: request
+      )
       render json: { error: "Invalid or revoked delivery link." }, status: :not_found
       return
     end
