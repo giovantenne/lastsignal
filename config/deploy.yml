@@ -76,9 +76,9 @@ env:
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
-    APP_BASE_URL: <%= ENV.fetch("APP_BASE_URL") %>
-    APP_HOST: <%= ENV.fetch("APP_HOST") %>
-    ALLOWED_EMAILS: <%= ENV.fetch("ALLOWED_EMAILS", "") %>
+    APP_BASE_URL: "<%= ENV.fetch("APP_BASE_URL") %>"
+    APP_HOST: "<%= ENV.fetch("APP_HOST") %>"
+    ALLOWED_EMAILS: "<%= ENV.fetch("ALLOWED_EMAILS", "") %>"
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r job" will tail logs from the first server in the job section.
