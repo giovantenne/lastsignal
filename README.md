@@ -142,7 +142,6 @@ bin/kamal setup
 bin/kamal deploy
 ```
 
-`bin/kamal deploy` runs `bin/rails db:migrate` automatically (see `config/deploy.yml` hooks).
 
 #### 5) Prepare the production database
 

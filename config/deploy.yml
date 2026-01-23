@@ -118,11 +118,6 @@ builder:
 # ssh:
 #   user: app
 
-# Automatically run migrations before deploy
-hooks:
-  pre-deploy:
-    - bin/rails db:migrate
-
 # Use accessory services (secrets come from .env.production).
 # accessories:
 #   db:
