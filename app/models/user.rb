@@ -59,6 +59,12 @@ class User < ApplicationRecord
                                 reject_if: :trusted_contact_blank?
 
   # Scopes for check-in processing
+  scope :with_active_messages, -> {
+    joins(messages: { message_recipients: { recipient: :recipient_key } })
+      .merge(Recipient.accepted)
+      .distinct
+  }
+
   scope :needing_grace_notification, -> {
     where(state: :active)
       .where("next_checkin_at <= ?", Time.current)
@@ -96,6 +102,12 @@ class User < ApplicationRecord
 
   def effective_cooldown_period_hours
     cooldown_period_hours || AppConfig.checkin_default_cooldown_hours
+  end
+
+  def has_active_messages?
+    messages.joins(message_recipients: { recipient: :recipient_key })
+      .merge(Recipient.accepted)
+      .exists?
   end
 
   # Check-in confirmation resets the cycle
@@ -199,6 +211,12 @@ class User < ApplicationRecord
   # Resume check-ins (requires login, proving email access)
   def unpause!
     return unless paused?
+
+    confirm_checkin!
+  end
+
+  def resume_checkins_for_messages!
+    return if paused? || delivered?
 
     confirm_checkin!
   end

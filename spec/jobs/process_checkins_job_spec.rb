@@ -25,6 +25,12 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     let!(:user_due_later) { create(:user).tap { |u| u.update_column(:next_checkin_at, 3.days.from_now) } }
     let!(:user_overdue) { create(:user).tap { |u| u.update_column(:next_checkin_at, 2.hours.ago) } }
 
+    before do
+      create(:message, :with_recipient, user: user_due_soon)
+      create(:message, :with_recipient, user: user_due_later)
+      create(:message, :with_recipient, user: user_overdue)
+    end
+
     it "sends a reminder for check-ins due within 24 hours" do
       expect {
         ProcessCheckinsJob.new.perform
@@ -65,6 +71,12 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     let!(:user_future_checkin) { create(:user, next_checkin_at: 1.week.from_now) }
     let!(:user_already_grace) { create(:user, :in_grace) }
 
+    before do
+      create(:message, :with_recipient, user: user_needs_grace)
+      create(:message, :with_recipient, user: user_future_checkin)
+      create(:message, :with_recipient, user: user_already_grace)
+    end
+
     it "transitions users who missed check-in to grace" do
       ProcessCheckinsJob.new.perform
       
@@ -88,11 +100,26 @@ RSpec.describe ProcessCheckinsJob, type: :job do
 
       ProcessCheckinsJob.new.perform
     end
+
+    it "skips users without active messages" do
+      no_message_user = create(:user, :needs_checkin)
+
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.not_to have_enqueued_mail(CheckinMailer, :grace_period_warning).with(no_message_user, anything)
+
+      expect(no_message_user.reload.state).to eq("active")
+    end
   end
 
   describe "process_grace_expirations" do
     let!(:user_grace_expired) { create(:user, :in_grace, grace_started_at: 4.days.ago, grace_period_hours: 72) }
     let!(:user_grace_active) { create(:user, :in_grace, grace_started_at: 1.hour.ago) }
+
+    before do
+      create(:message, :with_recipient, user: user_grace_expired)
+      create(:message, :with_recipient, user: user_grace_active)
+    end
 
     it "transitions users with expired grace to cooldown" do
       ProcessCheckinsJob.new.perform
@@ -131,6 +158,11 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     let!(:grace_contact) { create(:trusted_contact, user: user_in_grace) }
     let!(:active_contact) { create(:trusted_contact, user: user_active) }
 
+    before do
+      create(:message, :with_recipient, user: user_in_grace)
+      create(:message, :with_recipient, user: user_active)
+    end
+
     it "sends trusted contact pings during grace" do
       expect {
         ProcessCheckinsJob.new.perform
@@ -159,6 +191,11 @@ RSpec.describe ProcessCheckinsJob, type: :job do
   describe "process_cooldown_expirations" do
     let!(:user_cooldown_expired) { create(:user, :in_cooldown, cooldown_started_at: 3.days.ago, cooldown_period_hours: 48) }
     let!(:user_cooldown_active) { create(:user, :in_cooldown, cooldown_started_at: 1.hour.ago) }
+
+    before do
+      create(:message, :with_recipient, user: user_cooldown_expired)
+      create(:message, :with_recipient, user: user_cooldown_active)
+    end
 
     it "transitions users with expired cooldown to delivered" do
       ProcessCheckinsJob.new.perform
@@ -196,8 +233,7 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     it "sends delivery notice to user" do
-      message = create(:message, :with_recipient, user: user_cooldown_expired)
-      recipient_emails = message.recipients.pluck(:email)
+      recipient_emails = user_cooldown_expired.recipients.with_keys.pluck(:email)
 
       expect {
         ProcessCheckinsJob.new.perform
@@ -207,6 +243,7 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     it "progresses through the full timeline based on dates" do
       base_time = Time.current
       user = create(:user, :needs_checkin, checkin_interval_hours: 24, grace_period_hours: 24, cooldown_period_hours: 24)
+      create(:message, :with_recipient, user: user)
 
       travel_to(base_time) do
         ProcessCheckinsJob.new.perform

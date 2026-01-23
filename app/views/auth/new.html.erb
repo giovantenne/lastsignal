@@ -36,12 +36,23 @@
     <p class="mt-6 text-center text-sm text-gray-500">
       No password needed. We'll email you a secure sign-in link.
     </p>
+
+  </div>
+
+  <div class="mt-6 text-center text-sm text-gray-500">
+    Lost access to email? Use the <%= link_to "emergency stop", emergency_path, class: "font-medium text-red-600 underline hover:text-red-700" %> page.
   </div>
 
   <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-    <h3 class="text-sm font-medium text-blue-800">New here?</h3>
-    <p class="mt-1 text-sm text-blue-700">
-      Just enter your email above. If you don't have an account yet, one will be created for you automatically.
-    </p>
+    <% if AppConfig.allowlist_enabled? %>
+      <p class="text-sm text-blue-700">
+        Private instance: only allowlisted emails can sign in.
+      </p>
+    <% else %>
+      <h3 class="text-sm font-medium text-blue-800">New here?</h3>
+      <p class="mt-1 text-sm text-blue-700">
+        Just enter your email above. If you don't have an account yet, one will be created for you automatically.
+      </p>
+    <% end %>
   </div>
 </div>

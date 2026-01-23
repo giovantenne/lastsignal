@@ -9,6 +9,7 @@ class SendCheckinReminderJob < ApplicationJob
     User.transaction do
       user.lock!
       return unless user.active?
+      return unless user.has_active_messages?
       return if user.next_checkin_at.nil?
 
       # Only send reminder if check-in is due within 24 hours
@@ -54,4 +55,5 @@ class SendCheckinReminderJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.error("[SendCheckinReminderJob] AuditLog failed: #{e.class}: #{e.message}")
   end
+
 end

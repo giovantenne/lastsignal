@@ -18,6 +18,7 @@ class MessagesController < ApplicationController
 
   # POST /messages
   def create
+    had_active_messages = current_user.has_active_messages?
     # This is called from JavaScript with encrypted data
     recipient_envelopes = parse_recipient_envelopes
     unless recipients_valid?(recipient_envelopes)
@@ -40,6 +41,17 @@ class MessagesController < ApplicationController
       request: request
     )
 
+    if !had_active_messages && current_user.has_active_messages?
+      current_user.resume_checkins_for_messages!
+      AuditLog.log(
+        action: "checkin_resumed_for_messages",
+        user: current_user,
+        actor_type: "system",
+        metadata: { message_id: result.id },
+        request: request
+      )
+    end
+
     render json: { success: true, message_id: result.id, redirect_url: messages_path }
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.message }, status: :unprocessable_entity
@@ -61,6 +73,7 @@ class MessagesController < ApplicationController
 
   # PATCH/PUT /messages/:id
   def update
+    had_active_messages = current_user.has_active_messages?
     recipient_envelopes = parse_recipient_envelopes
     unless recipients_valid?(recipient_envelopes)
       render json: { error: "Invalid recipient selection." }, status: :unprocessable_entity
@@ -80,6 +93,17 @@ class MessagesController < ApplicationController
       metadata: { message_id: @message.id },
       request: request
     )
+
+    if !had_active_messages && current_user.has_active_messages?
+      current_user.resume_checkins_for_messages!
+      AuditLog.log(
+        action: "checkin_resumed_for_messages",
+        user: current_user,
+        actor_type: "system",
+        metadata: { message_id: @message.id },
+        request: request
+      )
+    end
 
     render json: { success: true, message_id: @message.id, redirect_url: message_path(@message) }
   rescue ActiveRecord::RecordInvalid => e

@@ -43,6 +43,29 @@
     </div>
   <% end %>
 
+  <% if !@has_active_messages && !@user.paused? && !@user.delivered? %>
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-blue-800">Check-ins On Hold</h3>
+          <p class="mt-2 text-sm text-blue-700">
+            You don't have any messages linked to accepted recipients. Check-ins and reminders stay
+            on hold until you create a message for at least one accepted recipient.
+          </p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <%= link_to "Add Message", new_message_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700" %>
+            <%= link_to "Manage Recipients", recipients_path, class: "inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <% if @user.paused? %>
     <!-- Paused State Banner -->
     <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-8">
@@ -83,6 +106,8 @@
         <p class="mt-1 text-sm text-gray-500">
           <% if @user.paused? %>
             Check-ins are <span class="font-medium text-yellow-600">paused</span>
+          <% elsif !@has_active_messages %>
+            Check-ins are <span class="font-medium text-blue-600">on hold</span>
           <% elsif @user.delivered? %>
             Messages have been <span class="font-medium text-gray-600">delivered</span>
           <% elsif @user.next_checkin_at.present? %>

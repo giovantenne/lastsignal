@@ -91,6 +91,20 @@ RSpec.describe "Messages", type: :request do
         expect(json["success"]).to be true
         expect(json["redirect_url"]).to eq(messages_path)
       end
+
+      it "resets check-in cycle when first active message is created" do
+        user.update!(next_checkin_at: 1.month.ago)
+
+        travel_to(Time.current) do
+          post messages_path, params: valid_params
+
+          expect(user.reload.next_checkin_at).to be_within(1.second)
+            .of(AppConfig.checkin_default_interval_hours.hours.from_now)
+          expect(user.reload.state).to eq("active")
+        end
+
+        expect(AuditLog.where(action: "checkin_resumed_for_messages", user: user).count).to eq(1)
+      end
     end
 
     context "with invalid params" do

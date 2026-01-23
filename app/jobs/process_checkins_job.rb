@@ -19,12 +19,14 @@ class ProcessCheckinsJob < ApplicationJob
 
   # Users with check-ins due soon: send reminder
   def process_due_reminders
-    users = User.where(state: :active)
+    users = User.with_active_messages
+      .where(state: :active)
       .where("next_checkin_at <= ? AND next_checkin_at > ?", 24.hours.from_now, Time.current)
 
     users.find_each do |user|
       with_user_lock(user) do
         next unless user.active?
+        next unless user.has_active_messages?
         next if user.next_checkin_at.nil?
         next unless user.next_checkin_at <= 24.hours.from_now
         next unless user.next_checkin_at > Time.current
@@ -48,11 +50,12 @@ class ProcessCheckinsJob < ApplicationJob
 
   # Users who missed their check-in: active -> grace
   def process_missed_checkins
-    users = User.needing_grace_notification
+    users = User.with_active_messages.needing_grace_notification
 
     users.find_each do |user|
       with_user_lock(user) do
         next unless user.active?
+        next unless user.has_active_messages?
         next if user.next_checkin_at.nil? || user.next_checkin_at > Time.current
 
         Rails.logger.info "[ProcessCheckinsJob] User #{user.id} missed check-in, entering grace period"
@@ -86,11 +89,12 @@ class ProcessCheckinsJob < ApplicationJob
 
   # Users whose grace period expired: grace -> cooldown
   def process_grace_expirations
-    users = User.needing_cooldown_transition
+    users = User.with_active_messages.needing_cooldown_transition
 
     users.find_each do |user|
       with_user_lock(user) do
         next unless user.grace?
+        next unless user.has_active_messages?
         next if user.grace_ends_at.nil? || user.grace_ends_at > Time.current
 
         Rails.logger.info "[ProcessCheckinsJob] User #{user.id} grace expired, entering cooldown"
@@ -124,11 +128,13 @@ class ProcessCheckinsJob < ApplicationJob
 
   def process_trusted_contact_pings
     contacts = TrustedContact.joins(:user)
+      .merge(User.with_active_messages)
       .where(users: { state: %w[grace cooldown] })
 
     contacts.find_each do |contact|
       with_contact_lock(contact) do
         next unless contact.ping_due?
+        next unless contact.user.has_active_messages?
 
         raw_token = contact.generate_token!
 
@@ -156,11 +162,12 @@ class ProcessCheckinsJob < ApplicationJob
 
   # Users whose cooldown expired: cooldown -> delivered
   def process_cooldown_expirations
-    users = User.needing_delivery
+    users = User.with_active_messages.needing_delivery
 
     users.find_each do |user|
       with_user_lock(user) do
         next unless user.cooldown?
+        next unless user.has_active_messages?
         next if user.cooldown_ends_at.nil? || user.cooldown_ends_at > Time.current
 
         if user.trusted_contact_pause_active?
@@ -261,4 +268,5 @@ class ProcessCheckinsJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.error("[ProcessCheckinsJob] AuditLog failed: #{e.class}: #{e.message}")
   end
+
 end

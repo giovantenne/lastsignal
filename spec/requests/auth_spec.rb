@@ -9,6 +9,36 @@ RSpec.describe "Auth", type: :request do
       expect(response).to have_http_status(:ok)
     end
 
+    context "when allowlist is enabled" do
+      before do
+        ENV["ALLOWED_EMAILS"] = "allowed@example.com"
+      end
+
+      after do
+        ENV["ALLOWED_EMAILS"] = ""
+      end
+
+      it "shows private instance notice" do
+        get login_path
+
+        expect(response.body).to include("Private instance: only allowlisted emails can sign in.")
+        expect(response.body).not_to include("New here?")
+      end
+    end
+
+    context "when allowlist is disabled" do
+      before do
+        ENV["ALLOWED_EMAILS"] = ""
+      end
+
+      it "shows new user message" do
+        get login_path
+
+        expect(response.body).to include("New here?")
+        expect(response.body).not_to include("Private instance: only allowlisted emails can sign in.")
+      end
+    end
+
     context "when already authenticated" do
       let(:user) { create(:user) }
 

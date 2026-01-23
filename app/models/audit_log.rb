@@ -38,6 +38,7 @@ class AuditLog < ApplicationRecord
     message_decrypted
     account_updated
     account_deleted
+    checkin_resumed_for_messages
     checkin_token_invalid
     panic_revoke_token_invalid
     delivery_token_invalid

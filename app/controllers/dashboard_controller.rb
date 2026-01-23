@@ -8,6 +8,7 @@ class DashboardController < ApplicationController
     @user = current_user
     @recipients_count = current_user.recipients.accepted.count
     @messages_count = current_user.messages.count
+    @has_active_messages = current_user.has_active_messages?
 
     # Check if we need to show the recovery code
     @show_recovery_code = session.delete(:show_recovery_code)

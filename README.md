@@ -212,4 +212,16 @@ Timing, rate-limit, and crypto defaults live in `config/initializers/app_default
 
 ## License
 
-MIT
+This project is licensed under the Business Source License 1.1 (BSL 1.1).
+Commercial use and offering this software as a hosted service require prior written permission.
+On 2031-01-23 the license changes to MIT.
+
+See `LICENSE` for details.
+
+## Disclaimer
+
+LastSignal is provided "as is" without warranty of any kind, and the authors take no liability
+for damages, data loss, or failed delivery. You are responsible for operating, securing, and
+backing up your instance.
+
+See `DISCLAIMER.md` for details.
