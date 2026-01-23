@@ -67,8 +67,7 @@
       <div>
         <dt class="text-sm font-medium text-gray-500">Check-in interval</dt>
         <dd class="mt-1 text-sm text-gray-900">
-          Every <strong><%= @user.effective_checkin_interval_hours %> hours</strong>
-          (<%= (@user.effective_checkin_interval_hours / 24.0).round(1) %> days)
+          Every <strong><%= (@user.effective_checkin_interval_hours / 24.0).round %> days</strong>
           <% unless @user.checkin_interval_hours %>
             <span class="text-gray-400">(default)</span>
           <% end %>
@@ -81,8 +80,7 @@
       <div>
         <dt class="text-sm font-medium text-gray-500">Grace period</dt>
         <dd class="mt-1 text-sm text-gray-900">
-          <strong><%= @user.effective_grace_period_hours %> hours</strong>
-          (<%= (@user.effective_grace_period_hours / 24.0).round(1) %> days)
+          <strong><%= (@user.effective_grace_period_hours / 24.0).round %> days</strong>
           <% unless @user.grace_period_hours %>
             <span class="text-gray-400">(default)</span>
           <% end %>
@@ -95,8 +93,7 @@
       <div>
         <dt class="text-sm font-medium text-gray-500">Cooldown period</dt>
         <dd class="mt-1 text-sm text-gray-900">
-          <strong><%= @user.effective_cooldown_period_hours %> hours</strong>
-          (<%= (@user.effective_cooldown_period_hours / 24.0).round(1) %> days)
+          <strong><%= (@user.effective_cooldown_period_hours / 24.0).round %> days</strong>
           <% unless @user.cooldown_period_hours %>
             <span class="text-gray-400">(default)</span>
           <% end %>
@@ -149,15 +146,13 @@
         <div class="flex justify-between">
           <dt class="text-sm font-medium text-gray-500">Ping interval</dt>
           <dd class="text-sm text-gray-900">
-            Every <strong><%= @user.trusted_contact.effective_ping_interval_hours %> hours</strong>
-            (<%= (@user.trusted_contact.effective_ping_interval_hours / 24.0).round(1) %> days)
+            Every <strong><%= (@user.trusted_contact.effective_ping_interval_hours / 24.0).round %> days</strong>
           </dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-sm font-medium text-gray-500">Pause duration</dt>
           <dd class="text-sm text-gray-900">
-            <strong><%= @user.trusted_contact.effective_pause_duration_hours %> hours</strong>
-            (<%= (@user.trusted_contact.effective_pause_duration_hours / 24.0).round(1) %> days) per confirmation
+            <strong><%= (@user.trusted_contact.effective_pause_duration_hours / 24.0).round %> days</strong> per confirmation
           </dd>
         </div>
         <div class="flex justify-between">

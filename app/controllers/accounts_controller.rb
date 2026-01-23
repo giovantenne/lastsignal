@@ -66,18 +66,53 @@ class AccountsController < ApplicationController
   private
 
   def account_params
-    params.require(:user).permit(
-      :checkin_interval_hours,
-      :grace_period_hours,
-      :cooldown_period_hours,
+    user_params = params.require(:user).permit(
+      :checkin_interval_days,
+      :grace_period_days,
+      :cooldown_period_days,
       trusted_contact_attributes: [
         :id,
         :name,
         :email,
-        :ping_interval_hours,
-        :pause_duration_hours,
+        :ping_interval_days,
+        :pause_duration_days,
         :_destroy
       ]
     )
+
+    convert_days_to_hours(user_params)
+  end
+
+  def convert_days_to_hours(user_params)
+    days_to_hours(user_params, {
+      checkin_interval_days: :checkin_interval_hours,
+      grace_period_days: :grace_period_hours,
+      cooldown_period_days: :cooldown_period_hours
+    })
+
+    trusted_contact = user_params[:trusted_contact_attributes]
+    if trusted_contact
+      days_to_hours(trusted_contact, {
+        ping_interval_days: :ping_interval_hours,
+        pause_duration_days: :pause_duration_hours
+      })
+    end
+
+    user_params
+  end
+
+  def days_to_hours(params_hash, mapping)
+    mapping.each do |day_key, hour_key|
+      next unless params_hash.key?(day_key)
+
+      day_value = params_hash.delete(day_key)
+
+      if day_value.blank?
+        params_hash[hour_key] = nil
+        next
+      end
+
+      params_hash[hour_key] = day_value.to_f.round * 24
+    end
   end
 end

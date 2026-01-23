@@ -26,53 +26,58 @@
       <div class="space-y-6">
         <!-- Check-in Interval -->
         <div>
-          <%= f.label :checkin_interval_hours, class: "block text-sm font-medium text-gray-700" %>
+          <%= f.label :checkin_interval_days, "Check-in interval", class: "block text-sm font-medium text-gray-700" %>
           <div class="mt-1 flex items-center space-x-2">
-            <%= f.number_field :checkin_interval_hours, 
-                min: AppConfig.checkin_min_interval_hours,
-                max: AppConfig.checkin_max_interval_hours,
-                placeholder: AppConfig.checkin_default_interval_hours,
+            <%= f.number_field :checkin_interval_days,
+                min: AppConfig.checkin_min_interval_hours / 24,
+                max: AppConfig.checkin_max_interval_hours / 24,
+                step: 1,
+                value: (@user.checkin_interval_hours ? (@user.checkin_interval_hours / 24.0).round : nil),
+                placeholder: AppConfig.checkin_default_interval_hours / 24,
                 class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-            <span class="text-sm text-gray-500">hours</span>
+            <span class="text-sm text-gray-500">days</span>
           </div>
           <p class="mt-1 text-xs text-gray-500">
-            How often you need to check in. 
-            Leave empty for default (<%= AppConfig.checkin_default_interval_hours %> hours / <%= AppConfig.checkin_default_interval_hours / 24 %> days).
-            Min: <%= AppConfig.checkin_min_interval_hours %>h, Max: <%= AppConfig.checkin_max_interval_hours %>h.
+            How often you need to check in.
+            Leave empty for default. We'll send reminder emails during the 24 hours before each check-in is due.
           </p>
         </div>
 
         <!-- Grace Period -->
         <div>
-          <%= f.label :grace_period_hours, class: "block text-sm font-medium text-gray-700" %>
+          <%= f.label :grace_period_days, "Grace period", class: "block text-sm font-medium text-gray-700" %>
           <div class="mt-1 flex items-center space-x-2">
-            <%= f.number_field :grace_period_hours,
-                min: AppConfig.checkin_min_grace_hours,
-                max: AppConfig.checkin_max_grace_hours,
-                placeholder: AppConfig.checkin_default_grace_hours,
+            <%= f.number_field :grace_period_days,
+                min: AppConfig.checkin_min_grace_hours / 24,
+                max: AppConfig.checkin_max_grace_hours / 24,
+                step: 1,
+                value: (@user.grace_period_hours ? (@user.grace_period_hours / 24.0).round : nil),
+                placeholder: AppConfig.checkin_default_grace_hours / 24,
                 class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-            <span class="text-sm text-gray-500">hours</span>
+            <span class="text-sm text-gray-500">days</span>
           </div>
           <p class="mt-1 text-xs text-gray-500">
             After missing a check-in, how long before entering cooldown. You'll receive reminder emails.
-            Leave empty for default (<%= AppConfig.checkin_default_grace_hours %> hours / <%= AppConfig.checkin_default_grace_hours / 24 %> days).
+            Leave empty for default.
           </p>
         </div>
 
         <!-- Cooldown Period -->
         <div>
-          <%= f.label :cooldown_period_hours, class: "block text-sm font-medium text-gray-700" %>
+          <%= f.label :cooldown_period_days, "Cooldown period", class: "block text-sm font-medium text-gray-700" %>
           <div class="mt-1 flex items-center space-x-2">
-            <%= f.number_field :cooldown_period_hours,
-                min: AppConfig.checkin_min_cooldown_hours,
-                max: AppConfig.checkin_max_cooldown_hours,
-                placeholder: AppConfig.checkin_default_cooldown_hours,
+            <%= f.number_field :cooldown_period_days,
+                min: AppConfig.checkin_min_cooldown_hours / 24,
+                max: AppConfig.checkin_max_cooldown_hours / 24,
+                step: 1,
+                value: (@user.cooldown_period_hours ? (@user.cooldown_period_hours / 24.0).round : nil),
+                placeholder: AppConfig.checkin_default_cooldown_hours / 24,
                 class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-            <span class="text-sm text-gray-500">hours</span>
+            <span class="text-sm text-gray-500">days</span>
           </div>
           <p class="mt-1 text-xs text-gray-500">
             Final warning before delivery. After this period, your messages will be sent to recipients.
-            Leave empty for default (<%= AppConfig.checkin_default_cooldown_hours %> hours / <%= AppConfig.checkin_default_cooldown_hours / 24 %> days).
+            Leave empty for default.
           </p>
         </div>
       </div>
@@ -88,7 +93,7 @@
         </div>
         <div class="flex-1 text-center border-t-2 border-blue-300 pt-2">
           <div>Interval</div>
-          <div class="text-blue-500">(<%= @user.effective_checkin_interval_hours %>h)</div>
+          <div class="text-blue-500">(<%= (@user.effective_checkin_interval_hours / 24.0).round %>d)</div>
         </div>
         <div class="flex-1 text-center">
           <div class="font-medium">Miss</div>
@@ -96,7 +101,7 @@
         </div>
         <div class="flex-1 text-center border-t-2 border-yellow-400 pt-2">
           <div>Grace</div>
-          <div class="text-yellow-600">(<%= @user.effective_grace_period_hours %>h)</div>
+          <div class="text-yellow-600">(<%= (@user.effective_grace_period_hours / 24.0).round %>d)</div>
         </div>
         <div class="flex-1 text-center">
           <div class="font-medium">Warning</div>
@@ -104,16 +109,15 @@
         </div>
         <div class="flex-1 text-center border-t-2 border-orange-400 pt-2">
           <div>Cooldown</div>
-          <div class="text-orange-600">(<%= @user.effective_cooldown_period_hours %>h)</div>
+          <div class="text-orange-600">(<%= (@user.effective_cooldown_period_hours / 24.0).round %>d)</div>
         </div>
         <div class="flex-1 text-center">
           <div class="font-medium text-red-600">Delivery</div>
         </div>
       </div>
       <p class="mt-4 text-xs text-blue-700">
-        Total time from missed check-in to delivery: 
-        <strong><%= @user.effective_grace_period_hours + @user.effective_cooldown_period_hours %> hours</strong>
-        (<%= ((@user.effective_grace_period_hours + @user.effective_cooldown_period_hours) / 24.0).round(1) %> days)
+        Total time from missed check-in to delivery:
+        <strong><%= ((@user.effective_grace_period_hours + @user.effective_cooldown_period_hours) / 24.0).round %> days</strong>
       </p>
     </div>
 
@@ -144,32 +148,38 @@
 
           <div class="grid sm:grid-cols-2 gap-6">
             <div>
-              <%= tc.label :ping_interval_hours, "Ping interval", class: "block text-sm font-medium text-gray-700" %>
+              <%= tc.label :ping_interval_days, "Ping interval", class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1 flex items-center space-x-2">
-                <%= tc.number_field :ping_interval_hours,
-                    min: AppConfig.trusted_contact_min_ping_interval_hours,
-                    max: AppConfig.trusted_contact_max_ping_interval_hours,
-                    placeholder: AppConfig.trusted_contact_default_ping_interval_hours,
+                <%= tc.number_field :ping_interval_days,
+                    min: AppConfig.trusted_contact_min_ping_interval_hours / 24,
+                    max: AppConfig.trusted_contact_max_ping_interval_hours / 24,
+                    step: 1,
+                    value: (tc.object&.ping_interval_hours ? (tc.object.ping_interval_hours / 24.0).round : nil),
+                    placeholder: AppConfig.trusted_contact_default_ping_interval_hours / 24,
                     class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-                <span class="text-sm text-gray-500">hours</span>
+                <span class="text-sm text-gray-500">days</span>
               </div>
               <p class="mt-1 text-xs text-gray-500">
-                How often a confirmation request is sent during grace or cooldown. Default: <%= AppConfig.trusted_contact_default_ping_interval_hours %>h.
+                How often a confirmation request is sent during grace or cooldown.
+                Leave empty for default.
               </p>
             </div>
 
             <div>
-              <%= tc.label :pause_duration_hours, "Pause duration", class: "block text-sm font-medium text-gray-700" %>
+              <%= tc.label :pause_duration_days, "Pause duration", class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1 flex items-center space-x-2">
-                <%= tc.number_field :pause_duration_hours,
-                    min: AppConfig.trusted_contact_min_pause_duration_hours,
-                    max: AppConfig.trusted_contact_max_pause_duration_hours,
-                    placeholder: AppConfig.trusted_contact_default_pause_duration_hours,
+                <%= tc.number_field :pause_duration_days,
+                    min: AppConfig.trusted_contact_min_pause_duration_hours / 24,
+                    max: AppConfig.trusted_contact_max_pause_duration_hours / 24,
+                    step: 1,
+                    value: (tc.object&.pause_duration_hours ? (tc.object.pause_duration_hours / 24.0).round : nil),
+                    placeholder: AppConfig.trusted_contact_default_pause_duration_hours / 24,
                     class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-                <span class="text-sm text-gray-500">hours</span>
+                <span class="text-sm text-gray-500">days</span>
               </div>
               <p class="mt-1 text-xs text-gray-500">
-                Each confirmation extends delivery by this duration. Default: <%= AppConfig.trusted_contact_default_pause_duration_hours %>h.
+                Each confirmation extends delivery by this duration.
+                Leave empty for default.
               </p>
             </div>
           </div>
@@ -194,7 +204,7 @@
         </div>
         <div class="flex-1 text-center border-t-2 border-indigo-300 pt-2">
           <div>Ping Trusted Contact</div>
-          <div class="text-indigo-500">(every <%= @user.trusted_contact&.effective_ping_interval_hours || AppConfig.trusted_contact_default_ping_interval_hours %>h)</div>
+          <div class="text-indigo-500">(every <%= ((@user.trusted_contact&.effective_ping_interval_hours || AppConfig.trusted_contact_default_ping_interval_hours) / 24.0).round %>d)</div>
         </div>
         <div class="flex-1 text-center">
           <div class="font-medium">Confirm Alive</div>
@@ -202,7 +212,7 @@
         </div>
         <div class="flex-1 text-center border-t-2 border-indigo-300 pt-2">
           <div>Delivery Paused</div>
-          <div class="text-indigo-500">(+<%= @user.trusted_contact&.effective_pause_duration_hours || AppConfig.trusted_contact_default_pause_duration_hours %>h)</div>
+          <div class="text-indigo-500">(+<%= ((@user.trusted_contact&.effective_pause_duration_hours || AppConfig.trusted_contact_default_pause_duration_hours) / 24.0).round %>d)</div>
         </div>
       </div>
       <p class="mt-4 text-xs text-indigo-700">
