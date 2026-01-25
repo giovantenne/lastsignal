@@ -37,7 +37,7 @@ class ProcessCheckinsJob < ApplicationJob
 
     users.find_each do |user|
       with_user_lock(user) do
-        next unless user.grace? || user.cooldown?
+        next unless user.active? || user.grace? || user.cooldown?
         next unless user.has_active_messages?
         next if user.next_attempt_due_at.nil? || user.next_attempt_due_at > Time.current
 
@@ -155,7 +155,18 @@ class ProcessCheckinsJob < ApplicationJob
     attempt_number = previous_attempts + 1
     now = Time.current
     entering_cooldown = previous_attempts < attempt_total && attempt_number >= attempt_total
-    new_state = attempt_number >= attempt_total ? :cooldown : :grace
+    
+    # State transitions:
+    # - First reminder (attempt 1): stays in active
+    # - Second reminder (attempt 2+): moves to grace
+    # - Final reminder (attempt = total): moves to cooldown
+    new_state = if attempt_number >= attempt_total
+                  :cooldown
+                elsif attempt_number == 1
+                  :active
+                else
+                  :grace
+                end
 
     user.update_columns(
       state: new_state,
@@ -184,12 +195,21 @@ class ProcessCheckinsJob < ApplicationJob
   end
 
   def log_attempt_audit(user, attempt_number:, attempt_total:)
-    if attempt_number == 1 && attempt_total > 1
+    if attempt_number == 1
+      # First reminder: stays in active state
       safe_audit_log(
         action: "checkin_reminder_sent",
         user: user,
         actor_type: "system",
         metadata: { next_checkin_at: user.next_checkin_at&.iso8601 }
+      )
+    elsif attempt_number == 2
+      # Second reminder: transitions to grace
+      safe_audit_log(
+        action: "grace_warning_sent",
+        user: user,
+        actor_type: "system",
+        metadata: { attempt_number: attempt_number }
       )
 
       safe_audit_log(

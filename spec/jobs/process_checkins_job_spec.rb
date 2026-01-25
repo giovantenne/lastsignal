@@ -29,12 +29,12 @@ RSpec.describe ProcessCheckinsJob, type: :job do
       create(:message, :with_recipient, user: user_future)
     end
 
-    it "sends a reminder for due check-ins" do
+    it "sends a reminder for due check-ins and stays in active state" do
       expect {
         ProcessCheckinsJob.new.perform
       }.to have_enqueued_mail(CheckinMailer, :reminder).with(user_due, anything)
 
-      expect(user_due.reload.state).to eq("grace")
+      expect(user_due.reload.state).to eq("active")
       expect(user_due.checkin_attempts_sent).to eq(1)
     end
 
@@ -46,6 +46,12 @@ RSpec.describe ProcessCheckinsJob, type: :job do
   end
 
   describe "followup attempts" do
+    let!(:user_active_due) do
+      # User in active state with 1 attempt already sent
+      user = create(:user, state: :active, checkin_attempt_interval_hours: 24, last_checkin_attempt_at: 2.days.ago)
+      user.update_column(:checkin_attempts_sent, 1)
+      user
+    end
     let!(:user_grace_due) do
       create(:user, :in_grace, checkin_attempt_interval_hours: 24, last_checkin_attempt_at: 2.days.ago)
     end
@@ -54,8 +60,19 @@ RSpec.describe ProcessCheckinsJob, type: :job do
     end
 
     before do
+      create(:message, :with_recipient, user: user_active_due)
       create(:message, :with_recipient, user: user_grace_due)
       create(:message, :with_recipient, user: user_grace_not_due)
+    end
+
+    it "sends second reminder and transitions to grace" do
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_mail(CheckinMailer, :grace_period_warning).with(user_active_due, anything)
+
+      user_active_due.reload
+      expect(user_active_due.state).to eq("grace")
+      expect(user_active_due.checkin_attempts_sent).to eq(2)
     end
 
     it "sends a followup reminder when due" do

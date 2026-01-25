@@ -24,21 +24,21 @@ Defaults:
 
 Example timeline:
 
-| Event | Date |
-| --- | --- |
-| Last check-in | Apr 1 |
-| Reminder #1 | May 1 |
-| Reminder #2 | May 8 |
-| Reminder #3 (final + trusted contact ping) | May 15 |
-| Delivery (if no response) | May 22 |
+| Event | Date | State |
+| --- | --- | --- |
+| Last check-in | Apr 1 | 🟢 Active |
+| Reminder #1 | May 1 | 🟢 Active |
+| Reminder #2 | May 8 | 🟡 Grace |
+| Reminder #3 (final + trusted contact ping) | May 15 | 🟠 Cooldown |
+| Delivery (if no response) | May 22 | 🔴 Delivered |
 
 If the trusted contact confirms on May 16:
 
-| Event | Date |
-| --- | --- |
-| Delivery paused until | May 31 |
-| New trusted contact ping | May 31 |
-| Delivery unless the user checks in or the trusted contact confirms again | Jun 7 |
+| Event | Date | State |
+| --- | --- | --- |
+| Delivery paused until | May 31 | 🟠 Cooldown (paused) |
+| New trusted contact ping | May 31 | 🟠 Cooldown |
+| Delivery unless the user checks in or the trusted contact confirms again | Jun 7 | 🔴 Delivered |
 
 ## 🔒 Security in 30 Seconds
 
