@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You have messages waiting on <%= @app_name %></title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #2563eb;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 20px 0;
+    }
+    .notice {
+      background-color: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <h1>You have <%= @messages_count %> message<%= 's' if @messages_count > 1 %> waiting</h1>
+
+  <p>
+    <strong><%= @sender.email %></strong> prepared encrypted message<%= 's' if @messages_count > 1 %> for you on <%= @app_name %>. 
+    These message<%= 's' if @messages_count > 1 %> <%= @messages_count > 1 ? 'have' : 'has' %> now been delivered.
+  </p>
+
+  <p>
+    <a href="<%= @delivery_url %>" class="button">Read Your Message<%= 's' if @messages_count > 1 %></a>
+  </p>
+
+  <div class="notice">
+    <strong>You'll need your passphrase</strong>
+    <p style="margin: 8px 0 0 0;">
+      To decrypt and read <%= @messages_count > 1 ? 'these messages' : 'this message' %>, you'll need to enter the passphrase 
+      you created when you first set up your account. If you've forgotten your passphrase, the message<%= 's' if @messages_count > 1 %> 
+      cannot be recovered.
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>This is an automated message from <%= @app_name %>. Please do not reply to this email.</p>
+    <p>
+      This link will remain active so you can access your message<%= 's' if @messages_count > 1 %> at any time.
+    </p>
+  </div>
+</body>
+</html>

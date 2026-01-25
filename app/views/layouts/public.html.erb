@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || "LastSignal" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Secure dead man's switch - Deliver encrypted messages to your loved ones">
+    <meta name="robots" content="noindex, nofollow">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen bg-gray-50 text-gray-900">
+    <header class="py-6 border-b border-gray-200 bg-white">
+      <div class="container mx-auto px-4">
+        <span class="text-xl font-bold text-gray-900">LastSignal</span>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+      <% if flash[:notice] %>
+        <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded" role="alert">
+          <%= flash[:notice] %>
+        </div>
+      <% end %>
+
+      <% if flash[:alert] %>
+        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded" role="alert">
+          <%= flash[:alert] %>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="mt-auto py-8 text-center text-sm text-gray-500">
+      <div class="container mx-auto px-4">
+        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg max-w-xl mx-auto">
+          <p class="font-medium text-yellow-800">Security Notice</p>
+          <p class="mt-1 text-yellow-700">
+            LastSignal will never ask for your passphrase by email. You'll only enter it on this site.
+            Always verify you are on the correct website before entering any sensitive data.
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+<% content_for(:title) { "Confirmation Received - LastSignal" } %>
+
+<div class="max-w-xl mx-auto">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h1 class="text-xl font-bold text-gray-900">Confirmation received</h1>
+    <p class="mt-2 text-sm text-gray-600">
+      Thanks for confirming. Delivery is paused until
+      <strong><%= @trusted_contact.paused_until&.strftime("%B %d, %Y at %H:%M UTC") %></strong>.
+    </p>
+
+    <div class="mt-4 text-xs text-gray-500">
+      You can close this page now.
+    </div>
+  </div>
+</div>

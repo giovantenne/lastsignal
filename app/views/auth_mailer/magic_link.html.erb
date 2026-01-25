@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your <%= @app_name %> login link</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #2563eb;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 20px 0;
+    }
+    .warning {
+      background-color: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    code {
+      background-color: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sign in to <%= @app_name %></h1>
+
+  <p>Click the button below to sign in to your account. This link expires in <%= @expires_in_minutes %> minutes.</p>
+
+  <p>
+    <a href="<%= @magic_link_url %>" class="button">Sign in to <%= @app_name %></a>
+  </p>
+
+  <p>Or copy and paste this URL into your browser:</p>
+  <p><code><%= @magic_link_url %></code></p>
+
+  <div class="warning">
+    <strong>Security notice:</strong> <%= @app_name %> will never ask you for your passphrase by email. You only enter it on the website. If you did not request this login link, you can safely ignore this email.
+  </div>
+
+  <div class="footer">
+    <p>This is an automated message from <%= @app_name %>. Please do not reply to this email.</p>
+  </div>
+</body>
+</html>

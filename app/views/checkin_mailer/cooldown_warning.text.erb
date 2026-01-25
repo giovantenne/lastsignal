@@ -1,0 +1,22 @@
+URGENT: FINAL REMINDER - Your <%= @app_name %> messages will be delivered soon
+<%= "=" * 60 %>
+
+This is your final reminder on <%= @app_name %>. Your encrypted messages will be delivered to your recipients unless you take action.
+
+Reminder attempt <%= @attempt_number %> of <%= @attempt_total %>.
+
+*** MESSAGES WILL BE DELIVERED: <%= @delivery_due_at&.strftime("%B %d, %Y at %H:%M UTC") || "Soon" %> ***
+
+If you are still alive and want to STOP the delivery, confirm your check-in now:
+<%= @checkin_url %>
+
+Clicking this link will:
+- Cancel the scheduled message delivery
+- Return you to active status
+- Schedule your next check-in
+
+IF YOU DO NOT CLICK THE LINK, YOUR MESSAGES WILL BE DELIVERED TO YOUR RECIPIENTS.
+
+---
+
+This is an automated message from <%= @app_name %>.

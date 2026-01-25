@@ -1,0 +1,62 @@
+<% content_for(:title) { "Add Recipient - LastSignal" } %>
+
+<div class="max-w-xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Add Recipient</h1>
+    <%= link_to "Cancel", recipients_path, class: "text-sm text-gray-600 hover:text-gray-800" %>
+  </div>
+
+  <%= form_with model: @recipient, url: recipients_path, class: "space-y-6" do |f| %>
+    <% if @recipient.errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-red-800">
+          <%= pluralize(@recipient.errors.count, "error") %> prevented this recipient from being saved:
+        </h3>
+        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+          <% @recipient.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+      <div>
+        <%= f.label :email, class: "block text-sm font-medium text-gray-700" %>
+        <%= f.email_field :email,
+            required: true,
+            placeholder: "recipient@example.com",
+            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+        <p class="mt-1 text-xs text-gray-500">
+          They'll receive an invite email to set up their encryption key.
+        </p>
+      </div>
+
+      <div>
+        <%= f.label :name, "Name (optional)", class: "block text-sm font-medium text-gray-700" %>
+        <%= f.text_field :name,
+            placeholder: "John Doe",
+            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+        <p class="mt-1 text-xs text-gray-500">
+          A friendly name to help you identify this recipient.
+        </p>
+      </div>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <h3 class="text-sm font-medium text-yellow-800">Privacy notice</h3>
+      <p class="mt-1 text-sm text-yellow-700">
+        The recipient will be notified via email that you've added them. They'll need to create a passphrase 
+        to receive encrypted messages from you. We recommend letting them know to expect this email.
+      </p>
+    </div>
+
+    <div class="flex justify-end space-x-4">
+      <%= link_to "Cancel", recipients_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800" %>
+      <%= f.submit "Send Invite",
+          disabled: current_user.delivered?,
+          class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" %>
+    </div>
+  <% end %>
+</div>

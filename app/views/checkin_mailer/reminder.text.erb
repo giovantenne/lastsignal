@@ -1,0 +1,24 @@
+Time to check in on <%= @app_name %>
+<%= "=" * 40 %>
+
+This is a reminder to confirm you're still active on <%= @app_name %>.
+
+Reminder attempt <%= @attempt_number %> of <%= @attempt_total %>.
+
+<% if @next_checkin_at %>
+Your check-in is due by: <%= @next_checkin_at.strftime("%B %d, %Y at %H:%M UTC") %>
+<% end %>
+
+Confirm your check-in here:
+<%= @checkin_url %>
+
+If you don't check in, we'll keep sending reminders every <%= ((@user.effective_checkin_attempt_interval_hours) / 24.0).round %> days.
+If you still don't respond after the final reminder, your messages will be delivered.
+
+<% if @next_attempt_at && @attempt_number < @attempt_total %>
+Next reminder: <%= @next_attempt_at.strftime("%B %d, %Y at %H:%M UTC") %>
+<% end %>
+
+---
+
+This is an automated message from <%= @app_name %>.

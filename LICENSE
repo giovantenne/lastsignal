@@ -1,0 +1,55 @@
+Business Source License 1.1
+
+License text copyright (c) 2017 MariaDB Corporation Ab.
+
+"Business Source License" is a trademark of MariaDB Corporation Ab.
+
+-------------------------------------------------------------------------------
+
+Parameters
+
+Licensor:             LastSignal
+Licensed Work:        LastSignal (lastsignal)
+Additional Use Grant: You may use, copy, modify, and self-host the Licensed Work
+                      for personal or internal organizational purposes.
+                      You may not sell, license, or provide the Licensed Work
+                      (or a modified version) as a hosted service or commercial
+                      offering without prior written permission from the Licensor.
+Change Date:          2031-01-23
+Change License:       MIT
+
+-------------------------------------------------------------------------------
+
+Terms
+
+The Licensed Work is provided under the terms of this Business Source License
+(the "License"). The License grants you rights to use the Licensed Work so long
+as you comply with the terms of the License.
+
+The License is not an Open Source license. However, on the Change Date the
+Licensed Work will be made available under the Change License.
+
+For the complete terms, see the Business Source License 1.1 text below.
+
+-------------------------------------------------------------------------------
+
+Business Source License 1.1
+
+Licensor hereby grants you the right to copy, modify, create derivative works,
+redistribute, and make non-production use of the Licensed Work. The Licensor
+may make an Additional Use Grant, above, permitting you additional rights.
+
+You may make production use of the Licensed Work only as allowed by the
+Additional Use Grant, above.
+
+Your right to use the Licensed Work is conditioned on your compliance with the
+License. If you violate the License, your rights under the License will
+terminate automatically.
+
+On the Change Date, the Licensor will automatically make the Licensed Work
+available under the Change License, as stated above.
+
+-------------------------------------------------------------------------------
+
+The full Business Source License 1.1 text can be found at:
+https://mariadb.com/bsl11/

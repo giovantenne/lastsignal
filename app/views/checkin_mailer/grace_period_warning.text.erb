@@ -1,0 +1,24 @@
+You missed your check-in on <%= @app_name %>
+<%= "=" * 40 %>
+
+You missed your scheduled check-in on <%= @app_name %>.
+
+Reminder attempt <%= @attempt_number %> of <%= @attempt_total %>.
+
+Confirm check-in:
+<%= @checkin_url %>
+
+Log in if you need to update settings:
+<%= @login_url %>
+
+If you don't check in, we'll continue sending reminders. After the final reminder, your encrypted messages will be delivered to your recipients.
+
+If this is intentional and you want your messages delivered, you don't need to do anything.
+
+<% if @next_attempt_at && @attempt_number < @attempt_total %>
+Next reminder: <%= @next_attempt_at.strftime("%B %d, %Y at %H:%M UTC") %>
+<% end %>
+
+---
+
+This is an automated message from <%= @app_name %>.

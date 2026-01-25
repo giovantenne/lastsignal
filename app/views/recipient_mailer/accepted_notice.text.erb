@@ -1,0 +1,15 @@
+Good news from <%= @app_name %>
+<%= "=" * 40 %>
+
+<%= @recipient.display_name %> has accepted your invite and registered their encryption key.
+
+You can now include them as a recipient for your encrypted messages.
+
+Accepted at: <%= @accepted_at&.strftime("%B %d, %Y at %H:%M UTC") %>
+
+Log in to create or update your messages:
+<%= login_url %>
+
+---
+
+This is an automated message from <%= @app_name %>.

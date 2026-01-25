@@ -1,0 +1,14 @@
+<div class="max-w-xl mx-auto bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+  <h1 class="text-2xl font-semibold text-gray-900 mb-3">Confirm your check-in</h1>
+  <p class="text-gray-600 mb-6">
+    This confirms you are safe and resets your check-in timer.
+  </p>
+
+  <%= form_with url: complete_checkin_path(token: @token), method: :post, class: "flex flex-col gap-4" do %>
+    <%= hidden_field_tag :checkin_token, @token %>
+    <%= submit_tag "Confirm check-in", class: "inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition" %>
+    <p class="text-xs text-gray-500">
+      If you did not request this, you can safely close this page.
+    </p>
+  <% end %>
+</div>

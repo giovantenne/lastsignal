@@ -1,0 +1,14 @@
+Sign in to <%= @app_name %>
+<%= "=" * 40 %>
+
+Click the link below to sign in to your account. This link expires in <%= @expires_in_minutes %> minutes.
+
+<%= @magic_link_url %>
+
+---
+
+SECURITY NOTICE: <%= @app_name %> will never ask you for your passphrase by email. You only enter it on the website. If you did not request this login link, you can safely ignore this email.
+
+---
+
+This is an automated message from <%= @app_name %>. Please do not reply to this email.

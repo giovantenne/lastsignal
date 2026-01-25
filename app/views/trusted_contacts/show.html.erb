@@ -1,0 +1,24 @@
+<% content_for(:title) { "Trusted Contact Confirmation - LastSignal" } %>
+
+<div class="max-w-xl mx-auto">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h1 class="text-xl font-bold text-gray-900">Confirm status</h1>
+    <p class="mt-2 text-sm text-gray-600">
+      <strong><%= @user.email %></strong> listed you as a Trusted Contact. If they're alive but unable
+      to respond, you can pause message delivery for a short period.
+    </p>
+
+    <div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-sm text-indigo-700">
+      Confirming will extend delivery by <strong><%= @trusted_contact.effective_pause_duration_hours %> hours</strong>.
+      This does not give you access to any messages.
+    </div>
+
+    <div class="mt-6">
+      <%= form_with url: trusted_contact_confirm_path(token: params[:token]), method: :post do |f| %>
+        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          Confirm They're OK
+        </button>
+      <% end %>
+    </div>
+  </div>
+</div>

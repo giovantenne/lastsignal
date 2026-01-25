@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; }
+    .highlight { background: white; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+    .button { display: inline-block; background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+    .footer { text-align: center; color: #6b7280; font-size: 14px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">Recipient Ready</h1>
+  </div>
+  
+  <div class="content">
+    <p>Good news!</p>
+    
+    <div class="highlight">
+      <strong><%= @recipient.display_name %></strong> has accepted your invite and registered their encryption key.
+    </div>
+    
+    <p>You can now include them as a recipient for your encrypted messages.</p>
+    
+    <p style="color: #6b7280; font-size: 14px;">
+      Accepted at: <%= @accepted_at&.strftime("%B %d, %Y at %H:%M UTC") %>
+    </p>
+    
+    <a href="<%= login_url %>" class="button">Log In to <%= @app_name %></a>
+  </div>
+  
+  <div class="footer">
+    <p>This is an automated message from <%= @app_name %>.</p>
+  </div>
+</body>
+</html>

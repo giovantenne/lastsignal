@@ -1,0 +1,221 @@
+<% content_for(:title) { "Edit Settings - LastSignal" } %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Edit Check-in Settings</h1>
+    <%= link_to "Cancel", account_path, class: "text-sm text-gray-600 hover:text-gray-800" %>
+  </div>
+
+  <%= form_with model: @user, url: account_path, method: :patch, class: "space-y-8" do |f| %>
+    <% if @user.errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-red-800">
+          <%= pluralize(@user.errors.count, "error") %> prevented your settings from being saved:
+        </h3>
+        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+          <% @user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-6">Timing Settings</h2>
+      
+      <div class="space-y-6">
+        <!-- Check-in Interval -->
+        <div>
+          <%= f.label :checkin_interval_days, "Check-in interval", class: "block text-sm font-medium text-gray-700" %>
+          <div class="mt-1 flex items-center space-x-2">
+            <%= f.number_field :checkin_interval_days,
+                min: AppConfig.checkin_min_interval_hours / 24,
+                max: AppConfig.checkin_max_interval_hours / 24,
+                step: 1,
+                value: (@user.checkin_interval_hours ? (@user.checkin_interval_hours / 24.0).round : nil),
+                placeholder: AppConfig.checkin_default_interval_hours / 24,
+                class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+            <span class="text-sm text-gray-500">days</span>
+          </div>
+          <p class="mt-1 text-xs text-gray-500">
+            How often you need to check in.
+            Leave empty for default. We'll send reminder emails if you miss a check-in.
+          </p>
+        </div>
+
+        <!-- Reminder Attempts -->
+        <div>
+          <%= f.label :checkin_attempts, "Reminder attempts", class: "block text-sm font-medium text-gray-700" %>
+          <div class="mt-1 flex items-center space-x-2">
+            <%= f.number_field :checkin_attempts,
+                min: AppConfig.checkin_min_attempts,
+                max: AppConfig.checkin_max_attempts,
+                step: 1,
+                value: @user.checkin_attempts,
+                placeholder: AppConfig.checkin_default_attempts,
+                class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+            <span class="text-sm text-gray-500">attempts</span>
+          </div>
+          <p class="mt-1 text-xs text-gray-500">
+            How many reminder emails to send if you miss a check-in (includes the first reminder).
+            Leave empty for default.
+          </p>
+        </div>
+
+        <!-- Attempt Interval -->
+        <div>
+          <%= f.label :checkin_attempt_interval_days, "Attempt interval", class: "block text-sm font-medium text-gray-700" %>
+          <div class="mt-1 flex items-center space-x-2">
+            <%= f.number_field :checkin_attempt_interval_days,
+                min: AppConfig.checkin_min_attempt_interval_hours / 24,
+                max: AppConfig.checkin_max_attempt_interval_hours / 24,
+                step: 1,
+                value: (@user.checkin_attempt_interval_hours ? (@user.checkin_attempt_interval_hours / 24.0).round : nil),
+                placeholder: AppConfig.checkin_default_attempt_interval_hours / 24,
+                class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+            <span class="text-sm text-gray-500">days</span>
+          </div>
+          <p class="mt-1 text-xs text-gray-500">
+            How often reminder attempts are sent after a missed check-in.
+            Leave empty for default (also used for delivery after trusted contact pauses).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline Visualization -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+      <h3 class="text-sm font-medium text-blue-800 mb-4">How the check-in cycle works</h3>
+      <div class="flex items-center text-xs text-blue-700">
+        <div class="flex-1 text-center">
+          <div class="font-medium">Check-in</div>
+          <div>↓</div>
+        </div>
+        <div class="flex-1 text-center border-t-2 border-blue-300 pt-2">
+          <div>Interval</div>
+          <div class="text-blue-500">(<%= (@user.effective_checkin_interval_hours / 24.0).round %>d)</div>
+        </div>
+        <div class="flex-1 text-center">
+          <div class="font-medium">Miss</div>
+          <div>↓</div>
+        </div>
+        <div class="flex-1 text-center border-t-2 border-yellow-400 pt-2">
+          <div>Attempts</div>
+          <div class="text-yellow-600">(<%= @user.effective_checkin_attempts %> total)</div>
+        </div>
+        <div class="flex-1 text-center">
+          <div class="font-medium">Every</div>
+          <div>↓</div>
+        </div>
+        <div class="flex-1 text-center border-t-2 border-orange-400 pt-2">
+          <div>Interval</div>
+          <div class="text-orange-600">(<%= (@user.effective_checkin_attempt_interval_hours / 24.0).round %>d)</div>
+        </div>
+        <div class="flex-1 text-center">
+          <div class="font-medium text-red-600">Delivery</div>
+        </div>
+      </div>
+      <p class="mt-4 text-xs text-blue-700">
+        Total time from the first reminder to delivery:
+        <strong><%= ((@user.effective_checkin_attempts * @user.effective_checkin_attempt_interval_hours) / 24.0).round %> days</strong>
+      </p>
+    </div>
+
+    <!-- Trusted Contact -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-2">Trusted Contact (optional)</h2>
+      <p class="text-sm text-gray-600 mb-6">
+        A Trusted Contact can confirm you're alive but temporarily unreachable. They can only pause delivery
+        after the final reminder. They cannot read your messages or access your account.
+      </p>
+
+      <div class="space-y-6">
+        <%= f.fields_for :trusted_contact do |tc| %>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div>
+              <%= tc.label :name, class: "block text-sm font-medium text-gray-700" %>
+              <%= tc.text_field :name,
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm",
+                  placeholder: "Jordan Lee" %>
+            </div>
+            <div>
+              <%= tc.label :email, class: "block text-sm font-medium text-gray-700" %>
+              <%= tc.email_field :email,
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm",
+                  placeholder: "trusted@example.com" %>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div>
+              <%= tc.label :pause_duration_days, "Pause duration", class: "block text-sm font-medium text-gray-700" %>
+              <div class="mt-1 flex items-center space-x-2">
+                <%= tc.number_field :pause_duration_days,
+                    min: AppConfig.trusted_contact_min_pause_duration_hours / 24,
+                    max: AppConfig.trusted_contact_max_pause_duration_hours / 24,
+                    step: 1,
+                    value: (tc.object&.pause_duration_hours ? (tc.object.pause_duration_hours / 24.0).round : nil),
+                    placeholder: AppConfig.trusted_contact_default_pause_duration_hours / 24,
+                    class: "block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+                <span class="text-sm text-gray-500">days</span>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">
+                Each confirmation extends delivery by this duration.
+                Leave empty for default.
+              </p>
+            </div>
+          </div>
+
+          <% if tc.object&.persisted? %>
+            <div class="flex items-center space-x-2">
+              <%= tc.check_box :_destroy, class: "h-4 w-4 text-red-600 border-gray-300 rounded" %>
+              <%= tc.label :_destroy, "Remove trusted contact", class: "text-sm text-red-600" %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Trusted Contact Flow -->
+    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+      <h3 class="text-sm font-medium text-indigo-800 mb-4">How Trusted Contact works</h3>
+      <div class="flex items-center text-xs text-indigo-700">
+        <div class="flex-1 text-center">
+          <div class="font-medium">Final Reminder</div>
+          <div>↓</div>
+        </div>
+        <div class="flex-1 text-center border-t-2 border-indigo-300 pt-2">
+          <div>Ping Trusted Contact</div>
+          <div class="text-indigo-500">(once per pause)</div>
+        </div>
+        <div class="flex-1 text-center">
+          <div class="font-medium">Confirm Alive</div>
+          <div>↓</div>
+        </div>
+        <div class="flex-1 text-center border-t-2 border-indigo-300 pt-2">
+          <div>Delivery Paused</div>
+          <div class="text-indigo-500">(+<%= ((@user.trusted_contact&.effective_pause_duration_hours || AppConfig.trusted_contact_default_pause_duration_hours) / 24.0).round %>d)</div>
+        </div>
+        <div class="flex-1 text-center">
+          <div class="font-medium">Pause Ends</div>
+          <div>↓</div>
+        </div>
+        <div class="flex-1 text-center border-t-2 border-indigo-300 pt-2">
+          <div>Delivery</div>
+          <div class="text-indigo-500">(+<%= (@user.effective_checkin_attempt_interval_hours / 24.0).round %>d)</div>
+        </div>
+      </div>
+      <p class="mt-4 text-xs text-indigo-700">
+        When the pause expires, we send another confirmation request. Delivery happens one <strong>"attempt interval"</strong>
+        after the pause ends unless you or the trusted contact check in.
+      </p>
+    </div>
+
+    <div class="flex justify-end space-x-4">
+      <%= link_to "Cancel", account_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800" %>
+      <%= f.submit "Save Settings",
+          disabled: current_user.delivered?,
+          class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" %>
+    </div>
+  <% end %>
+</div>

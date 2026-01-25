@@ -1,0 +1,75 @@
+<nav class="bg-white shadow-sm border-b border-gray-200">
+  <div class="container mx-auto px-4">
+    <div class="flex justify-between h-16">
+      <div class="flex items-center">
+        <%= link_to dashboard_path, class: "flex items-center" do %>
+          <span class="text-xl font-bold text-gray-900">LastSignal</span>
+        <% end %>
+
+        <!-- Desktop menu -->
+        <div class="hidden md:flex ml-10 space-x-4">
+          <%= link_to "Dashboard", dashboard_path, 
+              class: "px-3 py-2 rounded-md text-sm font-medium #{request.path == dashboard_path ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}" %>
+          <%= link_to "Recipients", recipients_path, 
+              class: "px-3 py-2 rounded-md text-sm font-medium #{request.path.start_with?('/recipients') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}" %>
+          <%= link_to "Messages", messages_path, 
+              class: "px-3 py-2 rounded-md text-sm font-medium #{request.path.start_with?('/messages') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}" %>
+        </div>
+      </div>
+
+      <!-- Desktop user menu -->
+      <div class="hidden md:flex items-center space-x-4">
+        <%= link_to current_user.email, account_path, 
+            class: "text-sm text-gray-600 hover:text-gray-900" %>
+        <%= button_to "Sign out", logout_path, method: :delete, 
+            class: "ml-4 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900" %>
+      </div>
+
+      <!-- Mobile hamburger button -->
+      <div class="md:hidden flex items-center">
+        <button type="button" id="mobile-menu-button" class="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+          <svg id="menu-icon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="close-icon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200">
+    <div class="px-2 pt-2 pb-3 space-y-1">
+      <%= link_to "Dashboard", dashboard_path, 
+          class: "block px-3 py-2 rounded-md text-base font-medium #{request.path == dashboard_path ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}" %>
+      <%= link_to "Recipients", recipients_path, 
+          class: "block px-3 py-2 rounded-md text-base font-medium #{request.path.start_with?('/recipients') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}" %>
+      <%= link_to "Messages", messages_path, 
+          class: "block px-3 py-2 rounded-md text-base font-medium #{request.path.start_with?('/messages') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}" %>
+    </div>
+    <div class="pt-4 pb-3 border-t border-gray-200">
+      <div class="px-4">
+        <%= link_to current_user.email, account_path, 
+            class: "text-sm font-medium text-gray-900 hover:text-gray-600" %>
+      </div>
+      <div class="mt-3 px-2 space-y-1">
+        <%= button_to "Sign out", logout_path, method: :delete, 
+            class: "block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50" %>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  document.getElementById('mobile-menu-button').addEventListener('click', function() {
+    const menu = document.getElementById('mobile-menu');
+    const menuIcon = document.getElementById('menu-icon');
+    const closeIcon = document.getElementById('close-icon');
+    
+    menu.classList.toggle('hidden');
+    menuIcon.classList.toggle('hidden');
+    closeIcon.classList.toggle('hidden');
+  });
+</script>

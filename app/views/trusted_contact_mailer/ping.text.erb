@@ -1,0 +1,10 @@
+Confirm <%= @user.email %> is okay
+
+You are listed as a Trusted Contact for <%= @user.email %> on <%= @app_name %>.
+They missed a check-in and asked you to confirm they're alive but temporarily unreachable.
+
+Confirm here:
+<%= @confirm_url %>
+
+This pauses message delivery for a set period. You cannot read any messages or access the account.
+If you cannot confirm, you can ignore this email.

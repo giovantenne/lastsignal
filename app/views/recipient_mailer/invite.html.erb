@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You've been added as a recipient on <%= @app_name %></title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #2563eb;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 20px 0;
+    }
+    .warning {
+      background-color: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .info {
+      background-color: #eff6ff;
+      border: 1px solid #3b82f6;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <h1>You've been added as a recipient</h1>
+
+  <p><strong><%= @sender.email %></strong> has added you as a recipient on <%= @app_name %>.</p>
+
+  <div class="info">
+    <strong>What is <%= @app_name %>?</strong>
+    <p style="margin: 8px 0 0 0;">
+      <%= @app_name %> is a "dead man's switch" service. If <%= @sender.email %> stops checking in, 
+      any encrypted messages they've prepared for you will be delivered automatically.
+    </p>
+  </div>
+
+  <h2>What you need to do</h2>
+  <p>
+    To receive encrypted messages, you need to set up your encryption key. This involves creating 
+    a secure passphrase that only you will know.
+  </p>
+
+  <p>
+    <a href="<%= @invite_url %>" class="button">Set Up Your Encryption Key</a>
+  </p>
+
+  <p><small>This invite link expires in <%= @expires_in_days %> days.</small></p>
+
+  <div class="warning">
+    <strong>Important: Remember your passphrase!</strong>
+    <p style="margin: 8px 0 0 0;">
+      Your passphrase is the only way to decrypt messages sent to you. We cannot recover it if you 
+      forget it. Write it down and store it somewhere safe.
+    </p>
+  </div>
+
+  <div class="warning">
+    <strong>Security notice:</strong>
+    <p style="margin: 8px 0 0 0;">
+      <%= @app_name %> will never ask you for your passphrase via email or any other channel. 
+      You only enter it on our secure website to decrypt messages. If you didn't expect this email 
+      or don't know <%= @sender.email %>, you can safely ignore it.
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>This is an automated message from <%= @app_name %>. Please do not reply to this email.</p>
+  </div>
+</body>
+</html>

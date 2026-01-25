@@ -1,0 +1,101 @@
+<% content_for(:title) { "Create Message - LastSignal" } %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Create Message</h1>
+    <%= link_to "Cancel", messages_path, class: "text-sm text-gray-600 hover:text-gray-800" %>
+  </div>
+
+  <div id="message-form">
+    <div class="space-y-6">
+      <!-- Label -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <label for="label" class="block text-sm font-medium text-gray-700">
+          Label (optional)
+        </label>
+        <input type="text" 
+               id="label" 
+               name="label"
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+               placeholder="e.g., Important information, Letter to family">
+        <p class="mt-1 text-xs text-yellow-600">
+          Warning: Labels are stored unencrypted as metadata. Avoid putting sensitive information here.
+        </p>
+      </div>
+
+      <!-- Message Content -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <label for="plaintext" class="block text-sm font-medium text-gray-700">
+          Message Content
+        </label>
+        <textarea id="plaintext" 
+                  name="plaintext"
+                  rows="10"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm font-mono"
+                  placeholder="Write your message here. It will be encrypted before being sent to the server."></textarea>
+        <p class="mt-1 text-xs text-gray-500">
+          This content is encrypted in your browser and never sent in plaintext.
+        </p>
+      </div>
+
+      <!-- Recipients -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <label class="block text-sm font-medium text-gray-700 mb-4">
+          Recipients
+        </label>
+        
+        <% if @available_recipients.empty? %>
+          <p class="text-sm text-gray-500">
+            No recipients available. 
+            <%= link_to "Add recipients", recipients_path, class: "text-blue-600 hover:text-blue-800" %> 
+            and wait for them to accept their invite.
+          </p>
+        <% else %>
+          <div class="space-y-3">
+            <% @available_recipients.each do |recipient| %>
+              <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer">
+                <input type="checkbox" 
+                       name="recipients[]" 
+                       value="<%= recipient.id %>"
+                       data-public-key="<%= recipient.recipient_key.public_key_b64u %>"
+                       class="recipient-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-900"><%= recipient.display_name %></p>
+                  <p class="text-xs text-gray-500"><%= recipient.email %></p>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Error/Status Messages -->
+      <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+      </div>
+
+      <div id="status-message" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+        <div class="flex items-center">
+          <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span id="status-text">Encrypting message...</span>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex justify-end space-x-4">
+        <%= link_to "Cancel", messages_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800" %>
+        <button type="button"
+                id="submit-btn"
+                <%= "disabled" if current_user.delivered? %>
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          Encrypt & Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= render "messages/encryption_script", action_url: messages_path, method: "POST" %>

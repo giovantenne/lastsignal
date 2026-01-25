@@ -1,0 +1,29 @@
+You've been added as a recipient on <%= @app_name %>
+<%= "=" * 50 %>
+
+<%= @sender.email %> has added you as a recipient on <%= @app_name %>.
+
+WHAT IS <%= @app_name.upcase %>?
+<%= @app_name %> is a "dead man's switch" service. If <%= @sender.email %> stops checking in, any encrypted messages they've prepared for you will be delivered automatically.
+
+WHAT YOU NEED TO DO
+To receive encrypted messages, you need to set up your encryption key. This involves creating a secure passphrase that only you will know.
+
+Set up your encryption key here:
+<%= @invite_url %>
+
+This invite link expires in <%= @expires_in_days %> days.
+
+---
+
+IMPORTANT: REMEMBER YOUR PASSPHRASE!
+Your passphrase is the only way to decrypt messages sent to you. We cannot recover it if you forget it. Write it down and store it somewhere safe.
+
+---
+
+SECURITY NOTICE
+<%= @app_name %> will never ask you for your passphrase via email or any other channel. You only enter it on our secure website to decrypt messages. If you didn't expect this email or don't know <%= @sender.email %>, you can safely ignore it.
+
+---
+
+This is an automated message from <%= @app_name %>. Please do not reply to this email.

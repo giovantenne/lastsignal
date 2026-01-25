@@ -1,0 +1,172 @@
+<% content_for(:title) { "Dashboard - LastSignal" } %>
+
+<div class="max-w-4xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
+
+  <% if @show_recovery_code %>
+    <!-- Recovery Code Modal/Banner -->
+    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-6 mb-8">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-red-800">Save Your Emergency Recovery Code</h3>
+          <p class="mt-2 text-sm text-red-700">
+            This code allows you to <strong>stop message delivery without email access</strong>.
+            Save it in a password manager or print it and store it securely.
+          </p>
+
+          <div class="mt-4 bg-white rounded-md p-4 border-2 border-red-300 inline-block">
+            <code class="text-2xl font-mono font-bold tracking-widest text-gray-900">
+              <%= @show_recovery_code %>
+            </code>
+          </div>
+
+          <p class="mt-4 text-xs text-red-600">
+            <strong>You will not see this code again.</strong> If you lose it, you can generate a new one from Account Settings.
+          </p>
+
+          <div class="mt-4">
+            <%= form_with url: acknowledge_recovery_code_dashboard_path, method: :post do |f| %>
+              <button type="submit"
+                      <%= "disabled" if @user.delivered? %>
+                      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                I've Saved My Recovery Code
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if !@has_active_messages && !@user.paused? && !@user.delivered? %>
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-blue-800">Check-ins On Hold</h3>
+          <p class="mt-2 text-sm text-blue-700">
+            You don't have any messages linked to accepted recipients. Check-ins and reminders stay
+            on hold until you create a message for at least one accepted recipient.
+          </p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <%= link_to "Manage Recipients", recipients_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700" %>
+            <%= link_to "Add Message", new_message_path, class: "inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @user.paused? %>
+    <!-- Paused State Banner -->
+    <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-8">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-yellow-800">Check-ins Paused</h3>
+          <p class="mt-2 text-sm text-yellow-700">
+            Your check-ins are currently paused. No reminders will be sent and no messages will be delivered
+            until you resume. This is useful if you're traveling or temporarily unable to respond to check-ins.
+          </p>
+
+          <div class="mt-4">
+            <%= form_with url: unpause_dashboard_path, method: :post do |f| %>
+              <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Resume Check-ins
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Status Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-medium text-gray-900">Your Status</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          <% if @user.paused? %>
+            Check-ins are <span class="font-medium text-yellow-600">paused</span>
+          <% elsif !@has_active_messages %>
+            Check-ins are <span class="font-medium text-blue-600">on hold</span>
+          <% elsif @user.delivered? %>
+            Messages have been <span class="font-medium text-gray-600">delivered</span>
+          <% elsif @user.next_checkin_at.present? %>
+            Next check-in due: <span class="font-medium"><%= time_ago_in_words(@user.next_checkin_at) %></span>
+            <span class="text-gray-400">(<%= @user.next_checkin_at.strftime("%b %d, %Y at %I:%M %p") %>)</span>
+          <% else %>
+            Next check-in due: <span class="font-medium">Not configured</span>
+          <% end %>
+        </p>
+      </div>
+      <div class="flex items-center gap-4">
+        <% status_colors = { 'active' => 'green', 'grace' => 'yellow', 'cooldown' => 'red', 'delivered' => 'gray', 'paused' => 'yellow' } %>
+        <% color = status_colors[@user.state] || 'gray' %>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-<%= color %>-100 text-<%= color %>-800">
+          <%= @user.state.capitalize %>
+        </span>
+
+        <% if @user.active? || @user.grace? || @user.cooldown? %>
+          <%= form_with url: pause_dashboard_path, method: :post, class: "inline" do |f| %>
+            <button type="submit" class="inline-flex items-center px-3 py-1 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                    onclick="return confirm('Pause check-ins? No reminders will be sent and no messages will be delivered until you resume.')">
+              <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Pause
+            </button>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="text-sm font-medium text-gray-500">Recipients</div>
+      <div class="mt-2 text-3xl font-bold text-gray-900"><%= @recipients_count %></div>
+      <%= link_to "Manage", recipients_path, class: "mt-2 inline-block text-sm text-blue-600 hover:text-blue-800" %>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="text-sm font-medium text-gray-500">Messages</div>
+      <div class="mt-2 text-3xl font-bold text-gray-900"><%= @messages_count %></div>
+      <%= link_to "Manage", messages_path, class: "mt-2 inline-block text-sm text-blue-600 hover:text-blue-800" %>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="text-sm font-medium text-gray-500">Check-in Interval</div>
+      <div class="mt-2 text-3xl font-bold text-gray-900"><%= (@user.effective_checkin_interval_hours / 24.0).round %> days</div>
+      <%= link_to "Settings", account_path, class: "mt-2 inline-block text-sm text-blue-600 hover:text-blue-800" %>
+    </div>
+  </div>
+
+  <!-- Security Notice -->
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+    <h3 class="text-sm font-medium text-blue-800">End-to-End Encrypted</h3>
+    <p class="mt-1 text-sm text-blue-700">
+      Your messages are encrypted in your browser before being stored. 
+      We cannot read your messages - only your recipients can decrypt them using their passphrase.
+    </p>
+  </div>
+</div>

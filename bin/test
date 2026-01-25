@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+RAILS_ENV=test bundle exec rspec "$@"

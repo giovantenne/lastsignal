@@ -1,0 +1,82 @@
+<% content_for(:title) { "Recipients - LastSignal" } %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Recipients</h1>
+    <%= link_to "Add Recipient", new_recipient_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700" %>
+  </div>
+
+  <% if @recipients.empty? %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      <h3 class="mt-4 text-lg font-medium text-gray-900">No recipients yet</h3>
+      <p class="mt-2 text-sm text-gray-500">
+        Add recipients who will receive your messages if you stop checking in.
+      </p>
+      <%= link_to "Add your first recipient", new_recipient_path, class: "mt-4 inline-flex items-center text-sm text-blue-600 hover:text-blue-800" %>
+    </div>
+  <% else %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <ul class="divide-y divide-gray-200">
+        <% @recipients.each do |recipient| %>
+          <li class="p-4 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-3">
+                  <p class="text-sm font-medium text-gray-900 truncate">
+                    <%= recipient.display_name %>
+                  </p>
+                  <% if recipient.accepted? %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Accepted
+                    </span>
+                  <% else %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Pending
+                    </span>
+                  <% end %>
+                </div>
+                <p class="mt-1 text-sm text-gray-500 truncate"><%= recipient.email %></p>
+                <% if recipient.invited? && recipient.invite_expires_at %>
+                  <p class="mt-1 text-xs text-gray-400">
+                    Invite expires: <%= recipient.invite_expires_at.strftime("%B %d, %Y") %>
+                    <% if recipient.invite_expires_at < Time.current %>
+                      <span class="text-red-500">(expired)</span>
+                    <% end %>
+                  </p>
+                <% end %>
+              </div>
+              <div class="flex items-center space-x-2">
+                <% if recipient.invited? %>
+                  <%= button_to "Resend Invite", resend_invite_recipient_path(recipient),
+                      method: :post,
+                      disabled: current_user.delivered?,
+                      class: "text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed" %>
+                <% end %>
+                <%= link_to "View", recipient_path(recipient), class: "text-sm text-gray-600 hover:text-gray-800" %>
+                <%= button_to "Remove", recipient_path(recipient),
+                    method: :delete,
+                    disabled: current_user.delivered?,
+                    data: { turbo_confirm: "Remove #{recipient.display_name}? They will no longer receive your messages." },
+                    class: "text-sm text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" %>
+              </div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- Info Box -->
+  <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <h3 class="text-sm font-medium text-blue-800">How recipients work</h3>
+    <ul class="mt-2 text-sm text-blue-700 list-disc list-inside space-y-1">
+      <li>Recipients receive an invite email with a secure link</li>
+      <li>They create a passphrase to generate their encryption key</li>
+      <li>Only they can decrypt messages using their passphrase</li>
+      <li>You can assign recipients to specific messages</li>
+    </ul>
+  </div>
+</div>

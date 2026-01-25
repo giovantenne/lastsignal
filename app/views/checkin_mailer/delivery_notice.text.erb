@@ -1,0 +1,17 @@
+Your messages were delivered
+<%= "=" * 40 %>
+
+Your LastSignal messages have been delivered to your recipients.
+
+Delivered at: <%= @delivered_at&.strftime("%B %d, %Y at %H:%M UTC") || "Just now" %>
+
+<% if @recipient_emails.any? %>
+Recipients notified:
+<% @recipient_emails.each do |email| %>
+- <%= email %>
+<% end %>
+<% end %>
+
+---
+
+This is an automated message from <%= @app_name %>.
