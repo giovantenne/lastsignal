@@ -82,6 +82,11 @@
               <p class="text-xs text-gray-500"><%= mr.recipient.email %></p>
             </div>
             <div class="text-right">
+              <% if mr.delivery_delay_days > 0 %>
+                <span class="text-xs text-amber-600 block">
+                  <%= mr.delivery_delay_days %> day delay
+                </span>
+              <% end %>
               <span class="text-xs text-gray-400">
                 <%= mr.envelope_algo %> v<%= mr.envelope_version %>
               </span>

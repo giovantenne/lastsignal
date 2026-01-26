@@ -12,7 +12,11 @@ class MessageRecipient < ApplicationRecord
             numericality: {
               only_integer: true,
               greater_than_or_equal_to: 0,
-              less_than_or_equal_to: ->(mr) { AppConfig.message_recipient_max_delivery_delay_days * 24 }
+              less_than_or_equal_to: ->(mr) { AppConfig.message_recipient_max_delivery_delay_days * 24 },
+              message: ->(object, data) {
+                max_days = AppConfig.message_recipient_max_delivery_delay_days
+                "must be at most #{max_days} #{'day'.pluralize(max_days)}"
+              }
             },
             allow_nil: true
 
