@@ -190,4 +190,64 @@ RSpec.describe ProcessCheckinsJob, type: :job do
       }.not_to have_enqueued_mail(TrustedContactMailer, :ping).with(contact, anything)
     end
   end
+
+  describe "one email per user per run" do
+    it "sends only one email even if multiple phases would trigger" do
+      # Simulate a user whose server was off for a long time:
+      # - next_checkin_at is way in the past (would trigger initial attempt)
+      # - already has attempts sent and next_attempt_due_at is past (would trigger followup)
+      # - is in cooldown with delivery_due_at in the past (would trigger delivery)
+      user = create(
+        :user,
+        :in_cooldown,
+        checkin_attempts: 3,
+        checkin_attempt_interval_hours: 24,
+        last_checkin_attempt_at: 30.days.ago,
+        cooldown_warning_sent_at: 30.days.ago
+      )
+      user.update_columns(
+        next_checkin_at: 60.days.ago,
+        checkin_attempts_sent: 3
+      )
+      create(:message, :with_recipient, user: user)
+
+      # Without protection, this would trigger delivery immediately
+      # With protection, only delivery should happen (last phase for this user)
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_job(DeliverMessagesJob).with(user.id).once
+
+      # User should be delivered
+      expect(user.reload.state).to eq("delivered")
+    end
+
+    it "processes only one reminder per run even after long downtime" do
+      # User in active state with next_checkin_at way in the past
+      user = create(:user, state: :active, checkin_attempt_interval_hours: 24)
+      user.update_columns(
+        next_checkin_at: 60.days.ago,
+        checkin_attempts_sent: 0
+      )
+      create(:message, :with_recipient, user: user)
+
+      # Should only send first reminder, not jump to delivery
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_mail(CheckinMailer, :reminder).with(user, anything).once
+
+      expect(user.reload.state).to eq("active")
+      expect(user.checkin_attempts_sent).to eq(1)
+
+      # Simulate time passing (next job run after interval)
+      user.update_column(:last_checkin_attempt_at, 2.days.ago)
+
+      # Second run should send second reminder
+      expect {
+        ProcessCheckinsJob.new.perform
+      }.to have_enqueued_mail(CheckinMailer, :grace_period_warning).with(user, anything).once
+
+      expect(user.reload.state).to eq("grace")
+      expect(user.checkin_attempts_sent).to eq(2)
+    end
+  end
 end

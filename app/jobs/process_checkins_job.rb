@@ -6,6 +6,9 @@ class ProcessCheckinsJob < ApplicationJob
   def perform
     Rails.logger.info "[ProcessCheckinsJob] Starting check-in processing"
 
+    # Track users who received an email this iteration (one email per user per run)
+    @processed_user_ids = Set.new
+
     process_initial_attempts
     process_followup_attempts
     process_trusted_contact_pings
@@ -21,6 +24,7 @@ class ProcessCheckinsJob < ApplicationJob
 
     users.find_each do |user|
       with_user_lock(user) do
+        next if @processed_user_ids.include?(user.id)
         next unless user.active?
         next unless user.has_active_messages?
         next if user.next_checkin_at.nil?
@@ -28,6 +32,7 @@ class ProcessCheckinsJob < ApplicationJob
         next if user.checkin_attempts_sent.to_i.positive?
 
         send_attempt(user)
+        @processed_user_ids.add(user.id)
       end
     end
   end
@@ -37,6 +42,7 @@ class ProcessCheckinsJob < ApplicationJob
 
     users.find_each do |user|
       with_user_lock(user) do
+        next if @processed_user_ids.include?(user.id)
         next unless user.active? || user.grace? || user.cooldown?
         next unless user.has_active_messages?
         next if user.next_attempt_due_at.nil? || user.next_attempt_due_at > Time.current
@@ -44,13 +50,8 @@ class ProcessCheckinsJob < ApplicationJob
         # Don't send more attempts if we've already reached the max
         next if user.checkin_attempts_sent.to_i >= user.effective_checkin_attempts
 
-        # Don't send followup if delivery is already due (let process_delivery handle it)
-        if user.cooldown? && !user.trusted_contact_pause_active? &&
-           user.delivery_due_at.present? && user.delivery_due_at <= Time.current
-          next
-        end
-
         send_attempt(user)
+        @processed_user_ids.add(user.id)
       end
     end
   end
@@ -60,6 +61,7 @@ class ProcessCheckinsJob < ApplicationJob
 
     users.find_each do |user|
       with_user_lock(user) do
+        next if @processed_user_ids.include?(user.id)
         next unless user.cooldown?
         next unless user.has_active_messages?
         next if user.delivery_due_at.nil? || user.delivery_due_at > Time.current
