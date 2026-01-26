@@ -111,8 +111,13 @@
           <% elsif @user.delivered? %>
             Messages have been <span class="font-medium text-gray-600">delivered</span>
           <% elsif @user.next_checkin_at.present? %>
-            Next check-in due: <span class="font-medium"><%= time_ago_in_words(@user.next_checkin_at) %></span>
-            <span class="text-gray-400">(<%= @user.next_checkin_at.strftime("%b %d, %Y at %I:%M %p") %>)</span>
+            <% if @user.next_checkin_at > Time.current %>
+              Next check-in due: <span class="font-medium">in <%= distance_of_time_in_words_to_now(@user.next_checkin_at) %></span>
+              <span class="text-gray-400">(<%= @user.next_checkin_at.strftime("%b %d, %Y at %I:%M %p") %>)</span>
+            <% else %>
+              Next check-in: <span class="font-medium text-amber-600">overdue by <%= time_ago_in_words(@user.next_checkin_at) %></span>
+              <span class="text-gray-400">(<%= @user.next_checkin_at.strftime("%b %d, %Y at %I:%M %p") %>)</span>
+            <% end %>
           <% else %>
             Next check-in due: <span class="font-medium">Not configured</span>
           <% end %>
