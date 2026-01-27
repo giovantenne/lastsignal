@@ -63,7 +63,7 @@
   </div>
 </nav>
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
   document.getElementById('mobile-menu-button').addEventListener('click', function() {
     const menu = document.getElementById('mobile-menu');
     const menuIcon = document.getElementById('menu-icon');
