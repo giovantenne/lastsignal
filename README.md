@@ -11,6 +11,25 @@ Website: [lastsignal.app](https://lastsignal.app)
 3) The final reminder triggers the trusted contact ping (if configured).
 4) If you still don't respond, messages are delivered by email.
 
+## 🛠️ Tech Stack
+
+- **Backend**: Rails 8 (Ruby 3.4)
+- **Database**: SQLite (single-file, no external DB needed)
+- **Background Jobs**: Solid Queue (built into Rails 8)
+- **Caching**: Solid Cache (built into Rails 8)
+- **Crypto**: libsodium (XChaCha20-Poly1305, Argon2id, X25519)
+- **Frontend**: Vanilla JS + Tailwind CSS (no build step required)
+- **Deployment**: Kamal (Docker-based, zero-downtime)
+
+## 🔒 Security Model
+
+- **End-to-end encrypted** - Server never sees plaintext messages
+- **Zero-knowledge architecture** - Even the operator can't read your data
+- **Modern cryptography** - Argon2id (256MB) + XChaCha20-Poly1305 + X25519
+- **Open source** - Audit the code yourself
+
+**[Full Security Documentation →](https://lastsignal.app/security)**
+
 ## ⏱️ Default Timing (Days)
 
 Defaults:
@@ -39,12 +58,6 @@ If the trusted contact confirms on May 16:
 | Delivery paused until | May 31 | 🟠 Cooldown (paused) |
 | New trusted contact ping | May 31 | 🟠 Cooldown |
 | Delivery unless the user checks in or the trusted contact confirms again | Jun 7 | 🔴 Delivered |
-
-## 🔒 Security in 30 Seconds
-
-- End-to-end encrypted messages (server never sees plaintext).
-- Passphrases and messages are only entered in the browser, never touch the server.
-- Delivery is automatic, but you control recipients and timing.
 
 ## 🧪 Development (Quick Trial)
 
@@ -121,7 +134,7 @@ You must set:
 - `SMTP_*` (your provider credentials)
 - `ALLOWED_EMAILS` (optional allowlist for private instances)
 
-Generate a master key if you don’t have one:
+Generate a master key if you don't have one:
 
 ```bash
 bin/rails credentials:edit
@@ -177,15 +190,13 @@ docker run --rm -v lastsignal_storage:/data -v "$PWD":/backup alpine \
   sh -c "cd /data && tar -xzf /backup/lastsignal_storage.tgz"
 ```
 
-## 🛠️ Troubleshooting
-
-- `TZInfo::DataSourceNotFound`: install `libyaml-dev` and run `bundle install` again.
-- Can’t reach dev server from Docker host: ensure `bin/dev` binds to `0.0.0.0`.
-- Login links not working: clear cookies or request a new magic link (single-use).
-
 ## ⚙️ Defaults
 
 Timing, rate-limit, and crypto defaults live in `config/initializers/app_defaults.rb`.
+
+## 🤝 Contributing
+
+Contributions welcome! Please open an issue first to discuss changes.
 
 ## 📄 License
 
