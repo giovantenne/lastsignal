@@ -59,6 +59,8 @@ If the trusted contact confirms on May 16:
 | New trusted contact ping | May 31 | 🟠 Cooldown |
 | Delivery unless the user checks in or the trusted contact confirms again | Jun 7 | 🔴 Delivered |
 
+**Recipient-specific delay**: You can also set a delay (in days) per recipient. This delays when the recipient can decrypt the message after delivery—useful for staggered access or time-sensitive information.
+
 ## 🧪 Development (Quick Trial)
 
 This runs a local dev stack and opens emails in your browser using [letter_opener](https://github.com/ryanb/letter_opener).
