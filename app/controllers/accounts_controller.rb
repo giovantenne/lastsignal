@@ -2,7 +2,7 @@
 
 class AccountsController < ApplicationController
   before_action :require_authentication
-  before_action :prevent_delivered_actions, only: [:edit, :update, :destroy, :regenerate_recovery_code]
+  before_action :prevent_delivered_actions, only: [ :edit, :update, :destroy, :regenerate_recovery_code ]
 
   # GET /account
   def show

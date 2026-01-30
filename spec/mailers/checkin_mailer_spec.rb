@@ -9,7 +9,7 @@ RSpec.describe CheckinMailer, type: :mailer do
     let(:mail) { described_class.reminder(user, raw_token, attempt_number: 1, attempt_total: 3) }
 
     it "sends to user email" do
-      expect(mail.to).to eq(["test@example.com"])
+      expect(mail.to).to eq([ "test@example.com" ])
     end
 
     it "has appropriate subject" do
@@ -27,7 +27,7 @@ RSpec.describe CheckinMailer, type: :mailer do
     let(:mail) { described_class.grace_period_warning(user, raw_token, attempt_number: 2, attempt_total: 3) }
 
     it "sends to user email" do
-      expect(mail.to).to eq(["test@example.com"])
+      expect(mail.to).to eq([ "test@example.com" ])
     end
 
     it "has urgent subject" do
@@ -45,7 +45,7 @@ RSpec.describe CheckinMailer, type: :mailer do
     let(:mail) { described_class.cooldown_warning(user, raw_token, attempt_number: 3, attempt_total: 3) }
 
     it "sends to user email" do
-      expect(mail.to).to eq(["test@example.com"])
+      expect(mail.to).to eq([ "test@example.com" ])
     end
 
     it "has urgent subject" do
@@ -59,11 +59,11 @@ RSpec.describe CheckinMailer, type: :mailer do
 
   describe "#delivery_notice" do
     let(:user) { create(:user, :in_cooldown, delivered_at: Time.current, email: "test@example.com") }
-    let(:recipients) { ["recipient1@example.com", "recipient2@example.com"] }
+    let(:recipients) { [ "recipient1@example.com", "recipient2@example.com" ] }
     let(:mail) { described_class.delivery_notice(user, recipients) }
 
     it "sends to user email" do
-      expect(mail.to).to eq(["test@example.com"])
+      expect(mail.to).to eq([ "test@example.com" ])
     end
 
     it "has delivered subject" do

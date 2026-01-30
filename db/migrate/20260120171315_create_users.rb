@@ -18,8 +18,8 @@ class CreateUsers < ActiveRecord::Migration[8.0]
     add_index :users, :email, unique: true
     add_index :users, :state
     add_index :users, :next_checkin_at
-    add_index :users, [:state, :next_checkin_at]
-    add_index :users, [:state, :grace_started_at]
-    add_index :users, [:state, :cooldown_started_at]
+    add_index :users, [ :state, :next_checkin_at ]
+    add_index :users, [ :state, :grace_started_at ]
+    add_index :users, [ :state, :cooldown_started_at ]
   end
 end

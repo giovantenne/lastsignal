@@ -2,8 +2,8 @@
 
 class MessagesController < ApplicationController
   before_action :require_authentication
-  before_action :prevent_delivered_actions, only: [:new, :create, :edit, :update, :destroy]
-  before_action :set_message, only: [:show, :edit, :update, :destroy]
+  before_action :prevent_delivered_actions, only: [ :new, :create, :edit, :update, :destroy ]
+  before_action :set_message, only: [ :show, :edit, :update, :destroy ]
 
   # GET /messages
   def index

@@ -68,7 +68,7 @@ class User < ApplicationRecord
   }
 
   scope :needing_followup_attempt, -> {
-    where(state: [:active, :grace, :cooldown])
+    where(state: [ :active, :grace, :cooldown ])
       .where.not(last_checkin_attempt_at: nil)
       .where("#{datetime_add_hours_sql("last_checkin_attempt_at", "COALESCE(checkin_attempt_interval_hours, #{AppConfig.checkin_default_attempt_interval_hours})")} <= ?",
              Time.current)

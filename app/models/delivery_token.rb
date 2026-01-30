@@ -16,7 +16,7 @@ class DeliveryToken < ApplicationRecord
       token_digest: digest(raw_token)
     )
 
-    [token, raw_token]
+    [ token, raw_token ]
   end
 
   # Find a token by its raw value

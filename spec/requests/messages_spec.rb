@@ -37,9 +37,9 @@ RSpec.describe "Messages", type: :request do
 
     it "only shows recipients with keys" do
       invited_recipient = create(:recipient, user: user, state: "invited")
-      
+
       get new_message_path
-      
+
       expect(response.body).to include(recipient.email)
       expect(response.body).not_to include(invited_recipient.email)
     end
@@ -85,7 +85,7 @@ RSpec.describe "Messages", type: :request do
 
       it "returns JSON success response" do
         post messages_path, params: valid_params
-        
+
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
         expect(json["success"]).to be true
@@ -110,7 +110,7 @@ RSpec.describe "Messages", type: :request do
     context "with invalid params" do
       it "returns error for missing ciphertext" do
         post messages_path, params: valid_params.except(:ciphertext_b64u)
-        
+
         expect(response).to have_http_status(:unprocessable_content)
       end
     end

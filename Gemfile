@@ -36,7 +36,7 @@ gem "solid_queue"
 gem "rack-attack"
 
 # Environment variables
-gem "dotenv-rails", groups: [:development, :test]
+gem "dotenv-rails", groups: [ :development, :test ]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false

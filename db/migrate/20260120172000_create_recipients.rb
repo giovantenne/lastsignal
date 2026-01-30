@@ -13,7 +13,7 @@ class CreateRecipients < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :recipients, [:user_id, :email], unique: true
+    add_index :recipients, [ :user_id, :email ], unique: true
     add_index :recipients, :invite_token_digest, unique: true
     add_index :recipients, :state
   end

@@ -55,7 +55,7 @@ RSpec.describe DeliverMessagesJob, type: :job do
 
       it "sends emails to each recipient" do
         DeliverMessagesJob.new.perform(user.id)
-        
+
         expect(ActionMailer::MailDeliveryJob).to have_been_enqueued.twice
       end
 

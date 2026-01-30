@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Dashboard (authenticated)
   # ============================================================================
-  resource :dashboard, only: [:show], controller: "dashboard" do
+  resource :dashboard, only: [ :show ], controller: "dashboard" do
     post :acknowledge_recovery_code
     post :pause
     post :unpause
@@ -29,7 +29,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Account Management (authenticated)
   # ============================================================================
-  resource :account, only: [:show, :edit, :update, :destroy] do
+  resource :account, only: [ :show, :edit, :update, :destroy ] do
     # Recovery code regeneration
     post :regenerate_recovery_code
   end
@@ -39,7 +39,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Recipients (authenticated)
   # ============================================================================
-  resources :recipients, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
+  resources :recipients, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
     member do
       post :resend_invite
     end
@@ -48,7 +48,7 @@ Rails.application.routes.draw do
   # ============================================================================
   # Messages (authenticated)
   # ============================================================================
-  resources :messages, only: [:index, :new, :create, :show, :edit, :update, :destroy]
+  resources :messages, only: [ :index, :new, :create, :show, :edit, :update, :destroy ]
 
   # ============================================================================
   # Check-in (public, token-based)

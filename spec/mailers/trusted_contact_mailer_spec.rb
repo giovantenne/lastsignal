@@ -9,7 +9,7 @@ RSpec.describe TrustedContactMailer, type: :mailer do
     let(:mail) { described_class.ping(contact, raw_token) }
 
     it "sends to trusted contact email" do
-      expect(mail.to).to eq(["trusted@example.com"])
+      expect(mail.to).to eq([ "trusted@example.com" ])
     end
 
     it "includes confirmation URL" do
@@ -22,7 +22,7 @@ RSpec.describe TrustedContactMailer, type: :mailer do
     let(:mail) { described_class.ping_notice(contact.user, contact) }
 
     it "sends to user email" do
-      expect(mail.to).to eq([contact.user.email])
+      expect(mail.to).to eq([ contact.user.email ])
     end
   end
 
@@ -31,7 +31,7 @@ RSpec.describe TrustedContactMailer, type: :mailer do
     let(:mail) { described_class.confirmation_notice(contact.user, contact) }
 
     it "sends to user email" do
-      expect(mail.to).to eq([contact.user.email])
+      expect(mail.to).to eq([ contact.user.email ])
     end
 
     it "includes pause time" do

@@ -3,7 +3,7 @@
 require "csv"
 
 class AuditLogCsv
-  HEADER = ["timestamp", "action", "metadata"].freeze
+  HEADER = [ "timestamp", "action", "metadata" ].freeze
 
   def initialize(audit_logs)
     @audit_logs = audit_logs

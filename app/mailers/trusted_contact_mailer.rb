@@ -9,7 +9,7 @@ class TrustedContactMailer < ApplicationMailer
 
     mail(
       to: contact.email,
-      subject: "Confirm #{@user.email} is safe" 
+      subject: "Confirm #{@user.email} is safe"
     )
   end
 

@@ -19,7 +19,7 @@ RSpec.describe AuditLog, type: :model do
       it "orders by created_at descending" do
         old = create(:audit_log, created_at: 1.day.ago)
         new = create(:audit_log, created_at: 1.hour.ago)
-        
+
         expect(AuditLog.recent.first).to eq(new)
         expect(AuditLog.recent.last).to eq(old)
       end
@@ -29,7 +29,7 @@ RSpec.describe AuditLog, type: :model do
       it "filters by action" do
         login = create(:audit_log, action: "login_success")
         logout = create(:audit_log, action: "logout")
-        
+
         expect(AuditLog.for_action("login_success")).to include(login)
         expect(AuditLog.for_action("login_success")).not_to include(logout)
       end

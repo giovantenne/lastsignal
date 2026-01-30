@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class AuthController < ApplicationController
-  before_action :redirect_if_authenticated, only: [:new, :create, :verify]
+  before_action :redirect_if_authenticated, only: [ :new, :create, :verify ]
 
   # GET /auth/login
   def new

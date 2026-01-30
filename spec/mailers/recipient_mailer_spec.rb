@@ -10,7 +10,7 @@ RSpec.describe RecipientMailer, type: :mailer do
     let(:mail) { described_class.invite(recipient, raw_token) }
 
     it "sends to recipient email" do
-      expect(mail.to).to eq(["recipient@example.com"])
+      expect(mail.to).to eq([ "recipient@example.com" ])
     end
 
     it "includes sender email in subject" do
@@ -35,7 +35,7 @@ RSpec.describe RecipientMailer, type: :mailer do
       let(:mail) { described_class.delivery(recipient, raw_token, 1) }
 
       it "sends to recipient email" do
-        expect(mail.to).to eq(["recipient@example.com"])
+        expect(mail.to).to eq([ "recipient@example.com" ])
       end
 
       it "has singular subject" do
@@ -63,7 +63,7 @@ RSpec.describe RecipientMailer, type: :mailer do
     let(:mail) { described_class.accepted_notice(recipient) }
 
     it "sends to sender email" do
-      expect(mail.to).to eq(["sender@example.com"])
+      expect(mail.to).to eq([ "sender@example.com" ])
     end
 
     it "includes recipient name in subject" do

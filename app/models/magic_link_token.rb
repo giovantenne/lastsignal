@@ -24,7 +24,7 @@ class MagicLinkToken < ApplicationRecord
       user_agent_hash: request ? hash_user_agent(request.user_agent) : nil
     )
 
-    [token, raw_token]
+    [ token, raw_token ]
   end
 
   # Find a token by its raw value and verify it's valid

@@ -13,6 +13,6 @@ class CreateMagicLinkTokens < ActiveRecord::Migration[8.0]
 
     add_index :magic_link_tokens, :token_digest, unique: true
     add_index :magic_link_tokens, :expires_at
-    add_index :magic_link_tokens, [:user_id, :created_at]
+    add_index :magic_link_tokens, [ :user_id, :created_at ]
   end
 end

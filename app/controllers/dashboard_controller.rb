@@ -2,7 +2,7 @@
 
 class DashboardController < ApplicationController
   before_action :require_authentication
-  before_action :prevent_delivered_actions, only: [:acknowledge_recovery_code, :pause, :unpause]
+  before_action :prevent_delivered_actions, only: [ :acknowledge_recovery_code, :pause, :unpause ]
 
   def show
     @user = current_user

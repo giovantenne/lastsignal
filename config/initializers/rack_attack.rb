@@ -122,7 +122,7 @@ class Rack::Attack
     [
       429,
       { "Content-Type" => "application/json" },
-      [{ error: "Rate limit exceeded. Please try again later." }.to_json]
+      [ { error: "Rate limit exceeded. Please try again later." }.to_json ]
     ]
   end
 end

@@ -23,7 +23,7 @@ class Recipient < ApplicationRecord
   # Generate invite token and set expiration
   def generate_invite_token!
     raw_token = SecureRandom.urlsafe_base64(32)
-    
+
     update!(
       invite_token_digest: self.class.digest(raw_token),
       invite_sent_at: Time.current,

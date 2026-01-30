@@ -71,7 +71,7 @@ class AuditLog < ApplicationRecord
   def self.sanitize_metadata(metadata)
     # Remove any sensitive keys that might accidentally be included
     sensitive_keys = %w[password passphrase token secret key private]
-    
+
     metadata.deep_stringify_keys.reject do |key, _|
       sensitive_keys.any? { |s| key.to_s.downcase.include?(s) }
     end

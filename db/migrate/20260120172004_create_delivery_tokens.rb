@@ -10,6 +10,6 @@ class CreateDeliveryTokens < ActiveRecord::Migration[8.0]
     end
 
     add_index :delivery_tokens, :token_digest, unique: true
-    add_index :delivery_tokens, [:recipient_id, :created_at]
+    add_index :delivery_tokens, [ :recipient_id, :created_at ]
   end
 end

@@ -10,6 +10,6 @@ class CreateMessageRecipients < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :message_recipients, [:message_id, :recipient_id], unique: true
+    add_index :message_recipients, [ :message_id, :recipient_id ], unique: true
   end
 end

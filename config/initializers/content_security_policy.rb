@@ -12,7 +12,7 @@ Rails.application.configure do
     policy.font_src    :self, :data
     policy.img_src     :self, :data
     policy.object_src  :none
-    
+
     # Allow libsodium from CDN for client-side crypto
     # wasm-unsafe-eval is needed for WebAssembly (libsodium)
     # strict-dynamic allows scripts loaded by trusted scripts
@@ -21,12 +21,12 @@ Rails.application.configure do
     else
       policy.script_src :self, "https://cdn.jsdelivr.net", :wasm_unsafe_eval, :strict_dynamic
     end
-    
-    policy.style_src   :self, :unsafe_inline # Tailwind requires inline styles
+
+    policy.style_src :self, :unsafe_inline # Tailwind requires inline styles
     policy.frame_ancestors :none
     policy.base_uri    :self
     policy.form_action :self
-    
+
     # Connect to self for API calls, and jsdelivr for libsodium source maps
     policy.connect_src :self, "https://cdn.jsdelivr.net"
 

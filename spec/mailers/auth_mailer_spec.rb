@@ -9,7 +9,7 @@ RSpec.describe AuthMailer, type: :mailer do
     let(:mail) { described_class.magic_link(user, raw_token) }
 
     it "sends to user email" do
-      expect(mail.to).to eq(["test@example.com"])
+      expect(mail.to).to eq([ "test@example.com" ])
     end
 
     it "has appropriate subject" do

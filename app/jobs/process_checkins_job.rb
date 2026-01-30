@@ -157,18 +157,18 @@ class ProcessCheckinsJob < ApplicationJob
     attempt_number = previous_attempts + 1
     now = Time.current
     entering_cooldown = previous_attempts < attempt_total && attempt_number >= attempt_total
-    
+
     # State transitions:
     # - First reminder (attempt 1): stays in active
     # - Second reminder (attempt 2+): moves to grace
     # - Final reminder (attempt = total): moves to cooldown
     new_state = if attempt_number >= attempt_total
                   :cooldown
-                elsif attempt_number == 1
+    elsif attempt_number == 1
                   :active
-                else
+    else
                   :grace
-                end
+    end
 
     user.update_columns(
       state: new_state,

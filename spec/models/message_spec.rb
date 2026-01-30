@@ -21,7 +21,7 @@ RSpec.describe Message, type: :model do
     describe ".with_recipients" do
       it "eager loads message_recipients and recipients" do
         message = create(:message, :with_recipient)
-        
+
         # Should not trigger additional queries
         loaded = Message.with_recipients.find(message.id)
         expect(loaded.message_recipients).to be_loaded
@@ -37,12 +37,12 @@ RSpec.describe Message, type: :model do
     let(:encrypted_key) { Base64.urlsafe_encode64(SecureRandom.random_bytes(48), padding: false) }
 
     let(:recipient_envelopes) do
-      [{
+      [ {
         recipient_id: recipient.id,
         encrypted_msg_key_b64u: encrypted_key,
         envelope_algo: "crypto_box_seal",
         envelope_version: 1
-      }]
+      } ]
     end
 
     it "creates a message" do
@@ -77,7 +77,7 @@ RSpec.describe Message, type: :model do
         nonce_b64u: nonce,
         recipient_envelopes: recipient_envelopes
       )
-      
+
       expect(message).to be_a(Message)
       expect(message).to be_persisted
       expect(message.label).to eq("Test Message")
@@ -91,7 +91,7 @@ RSpec.describe Message, type: :model do
         nonce_b64u: nonce,
         recipient_envelopes: recipient_envelopes
       )
-      
+
       expect(message.aead_algo).to eq("xchacha20poly1305_ietf")
       expect(message.payload_version).to eq(1)
     end
@@ -102,7 +102,7 @@ RSpec.describe Message, type: :model do
     let(:recipient1) { create(:recipient, :accepted, user: user) }
     let(:recipient2) { create(:recipient, :accepted, user: user) }
     let(:message) { create(:message, user: user) }
-    
+
     before do
       create(:message_recipient, message: message, recipient: recipient1)
     end
@@ -116,12 +116,12 @@ RSpec.describe Message, type: :model do
         label: "Updated Label",
         ciphertext_b64u: new_ciphertext,
         nonce_b64u: new_nonce,
-        recipient_envelopes: [{
+        recipient_envelopes: [ {
           recipient_id: recipient2.id,
           encrypted_msg_key_b64u: encrypted_key
-        }]
+        } ]
       )
-      
+
       message.reload
       expect(message.label).to eq("Updated Label")
       expect(message.ciphertext_b64u).to eq(new_ciphertext)
@@ -132,12 +132,12 @@ RSpec.describe Message, type: :model do
         label: "Updated",
         ciphertext_b64u: new_ciphertext,
         nonce_b64u: new_nonce,
-        recipient_envelopes: [{
+        recipient_envelopes: [ {
           recipient_id: recipient2.id,
           encrypted_msg_key_b64u: encrypted_key
-        }]
+        } ]
       )
-      
+
       expect(message.recipients).to contain_exactly(recipient2)
     end
   end
@@ -150,7 +150,7 @@ RSpec.describe Message, type: :model do
 
     it "returns payload hash for valid recipient" do
       payload = message.delivery_payload_for(recipient)
-      
+
       expect(payload).to include(
         :ciphertext_b64u,
         :nonce_b64u,

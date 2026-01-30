@@ -180,7 +180,7 @@ RSpec.describe "Auth", type: :request do
         expect {
           get verify_magic_link_path(token: raw_token)
         }.to change(AuditLog, :count).by(1)
-        
+
         expect(AuditLog.last.action).to eq("login_success")
       end
 
@@ -269,7 +269,7 @@ RSpec.describe "Auth", type: :request do
       expect {
         delete logout_path
       }.to change(AuditLog, :count).by(1)
-      
+
       expect(AuditLog.last.action).to eq("logout")
     end
   end

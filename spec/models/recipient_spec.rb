@@ -99,7 +99,7 @@ RSpec.describe Recipient, type: :model do
 
   describe "#invite_valid?" do
     it "returns true for valid invite" do
-      recipient = create(:recipient, 
+      recipient = create(:recipient,
         state: "invited",
         invite_token_digest: "some-digest",
         invite_expires_at: 1.day.from_now)
@@ -138,7 +138,7 @@ RSpec.describe Recipient, type: :model do
       expect {
         recipient.accept!(public_key_b64u: public_key, kdf_salt_b64u: kdf_salt, kdf_params: kdf_params)
       }.to change { recipient.reload.recipient_key }.from(nil)
-      
+
       expect(recipient.recipient_key.public_key_b64u).to eq(public_key)
     end
 
