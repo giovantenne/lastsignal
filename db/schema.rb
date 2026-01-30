@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_26_202434) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_30_124622) do
   create_table "audit_logs", force: :cascade do |t|
     t.bigint "user_id"
     t.string "actor_type", null: false
@@ -102,6 +102,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_202434) do
     t.datetime "accepted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "passphrase_hint", limit: 280
     t.index ["invite_token_digest"], name: "index_recipients_on_invite_token_digest", unique: true
     t.index ["state"], name: "index_recipients_on_state"
     t.index ["user_id", "email"], name: "index_recipients_on_user_id_and_email", unique: true

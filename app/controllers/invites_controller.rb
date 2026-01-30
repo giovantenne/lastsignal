@@ -73,6 +73,7 @@ class InvitesController < ApplicationController
     public_key_b64u = params[:public_key_b64u]
     kdf_salt_b64u = params[:kdf_salt_b64u]
     kdf_params = params[:kdf_params]
+    passphrase_hint = params[:passphrase_hint]
 
     if public_key_b64u.blank? || kdf_salt_b64u.blank? || kdf_params.blank?
       render json: { error: "Missing required parameters." }, status: :unprocessable_entity
@@ -86,7 +87,8 @@ class InvitesController < ApplicationController
       @recipient.accept!(
         public_key_b64u: public_key_b64u,
         kdf_salt_b64u: kdf_salt_b64u,
-        kdf_params: kdf_params
+        kdf_params: kdf_params,
+        passphrase_hint: passphrase_hint
       )
 
       AuditLog.log(

@@ -48,7 +48,22 @@
                  minlength="8"
                  autocomplete="new-password"
                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                 placeholder="Confirm your passphrase">
+                  placeholder="Confirm your passphrase">
+        </div>
+
+        <div>
+          <label for="passphrase-hint" class="block text-sm font-medium text-blue-700">
+            Passphrase Hint (Optional)
+          </label>
+          <textarea id="passphrase-hint"
+                    name="passphrase_hint"
+                    rows="3"
+                    maxlength="280"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    placeholder="Example: First trip together + year"></textarea>
+          <p class="mt-1 text-xs text-gray-500">
+            This hint is <strong>not encrypted</strong> and is stored in plaintext on the server. It may be visible to the sender.
+          </p>
         </div>
 
         <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
@@ -112,6 +127,7 @@
   async function handleSubmit() {
     const passphrase = document.getElementById('passphrase').value;
     const passphraseConfirm = document.getElementById('passphrase-confirm').value;
+    const passphraseHint = document.getElementById('passphrase-hint').value;
     const errorEl = document.getElementById('error-message');
     const statusEl = document.getElementById('status-message');
     const statusText = document.getElementById('status-text');
@@ -178,7 +194,8 @@
         body: JSON.stringify({
           public_key_b64u: publicKeyB64u,
           kdf_salt_b64u: inviteData.kdf_salt_b64u,
-          kdf_params: kdfParams
+          kdf_params: kdfParams,
+          passphrase_hint: passphraseHint
         })
       });
 

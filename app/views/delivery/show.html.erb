@@ -18,8 +18,7 @@
       <ul class="mt-2 text-sm text-yellow-700 list-disc list-inside space-y-1">
         <% @pending_message_recipients.each do |mr| %>
           <li>
-            <strong><%= mr.message.label.presence || "Untitled message" %></strong>
-            &mdash; available on <%= mr.available_at.strftime("%B %d, %Y at %H:%M UTC") %>
+            Message available on <%= mr.available_at.strftime("%B %d, %Y at %H:%M UTC") %>
           </li>
         <% end %>
       </ul>
@@ -57,9 +56,26 @@
                  name="passphrase"
                  required
                  autocomplete="current-password"
-                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                 placeholder="Enter your passphrase">
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  placeholder="Enter your passphrase">
         </div>
+
+        <% if @recipient.passphrase_hint.present? %>
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-gray-800">Need a hint?</p>
+              <button type="button"
+                      id="hint-toggle"
+                      class="text-sm font-medium text-blue-600 hover:text-blue-700">
+                Show hint
+              </button>
+            </div>
+            <div id="hint-text" class="hidden mt-2 text-sm text-gray-700">
+              <p class="font-medium text-gray-900"><%= @recipient.passphrase_hint %></p>
+              <p class="mt-1 text-xs text-gray-500">This hint is stored in plaintext on the server.</p>
+            </div>
+          </div>
+        <% end %>
 
         <div id="error-message" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
         </div>
@@ -317,4 +333,14 @@
 
   // Attach event listener when DOM is ready
   document.getElementById('decrypt-btn').addEventListener('click', handleDecrypt);
+
+  const hintToggle = document.getElementById('hint-toggle');
+  if (hintToggle) {
+    hintToggle.addEventListener('click', () => {
+      const hintText = document.getElementById('hint-text');
+      const isHidden = hintText.classList.contains('hidden');
+      hintText.classList.toggle('hidden');
+      hintToggle.textContent = isHidden ? 'Hide hint' : 'Show hint';
+    });
+  }
 </script>

@@ -15,8 +15,10 @@ class Recipient < ApplicationRecord
   validates :email, presence: true,
                     format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :email, uniqueness: { scope: :user_id, case_sensitive: false }
+  validates :passphrase_hint, length: { maximum: 280 }, allow_blank: true
 
   before_validation :normalize_email
+  before_validation :normalize_passphrase_hint
 
   scope :with_keys, -> { accepted.joins(:recipient_key) }
 
@@ -49,7 +51,7 @@ class Recipient < ApplicationRecord
   end
 
   # Accept the invite and store the public key
-  def accept!(public_key_b64u:, kdf_salt_b64u:, kdf_params:)
+  def accept!(public_key_b64u:, kdf_salt_b64u:, kdf_params:, passphrase_hint: nil)
     transaction do
       create_recipient_key!(
         public_key_b64u: public_key_b64u,
@@ -60,7 +62,8 @@ class Recipient < ApplicationRecord
       update!(
         state: :accepted,
         accepted_at: Time.current,
-        invite_token_digest: nil # Invalidate token after use
+        invite_token_digest: nil, # Invalidate token after use
+        passphrase_hint: passphrase_hint.presence
       )
     end
   end
@@ -79,6 +82,10 @@ class Recipient < ApplicationRecord
 
   def normalize_email
     self.email = email&.downcase&.strip
+  end
+
+  def normalize_passphrase_hint
+    self.passphrase_hint = passphrase_hint&.strip.presence
   end
 
   def self.digest(raw_token)
