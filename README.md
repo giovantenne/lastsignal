@@ -18,7 +18,7 @@ Website: [lastsignal.app](https://lastsignal.app)
 - **End-to-end encrypted** - Server never sees plaintext messages
 - **Zero-knowledge architecture** - Even the operator can't read your data
 - **Modern cryptography** - Argon2id (256MB) + XChaCha20-Poly1305 + X25519
-- **Open source** - Audit the code yourself
+- **Auditable** - Audit the code yourself
 
 **[Full Security Documentation →](https://lastsignal.app/security)**
 
