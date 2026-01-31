@@ -41,6 +41,14 @@ class TrustedContactsController < ApplicationController
     trusted_contact.confirm!
 
     AuditLog.log(
+      action: "trusted_contact_pause_set",
+      user: trusted_contact.user,
+      actor_type: "trusted_contact",
+      metadata: { trusted_contact_id: trusted_contact.id, paused_until: trusted_contact.paused_until&.iso8601 },
+      request: request
+    )
+
+    AuditLog.log(
       action: "trusted_contact_confirmed",
       user: trusted_contact.user,
       actor_type: "trusted_contact",

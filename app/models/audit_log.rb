@@ -23,11 +23,11 @@ class AuditLog < ApplicationRecord
     grace_warning_sent
     cooldown_warning_sent
     delivery_notice_sent
-    delivery_blocked_by_trusted_contact
     emergency_stop
     delivery_link_opened
     trusted_contact_ping_sent
     trusted_contact_ping_notice_sent
+    trusted_contact_pause_set
     trusted_contact_confirmed
     trusted_contact_confirmation_notice_sent
     trusted_contact_token_invalid

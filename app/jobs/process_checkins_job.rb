@@ -69,17 +69,6 @@ class ProcessCheckinsJob < ApplicationJob
         if user.trusted_contact_pause_active?
           Rails.logger.info "[ProcessCheckinsJob] User #{user.id} delivery blocked by trusted contact pause"
           contact = user.trusted_contact
-
-          safe_audit_log(
-            action: "delivery_blocked_by_trusted_contact",
-            user: user,
-            actor_type: "system",
-            metadata: {
-              trusted_contact_id: contact&.id,
-              paused_until: contact&.paused_until&.iso8601,
-              delivery_due_at: user.delivery_due_at&.iso8601
-            }
-          )
           next
         end
 
