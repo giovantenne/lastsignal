@@ -164,6 +164,8 @@ class User < ApplicationRecord
 
   # Check-in confirmation resets the cycle
   def confirm_checkin!
+    return if delivered?
+
     update!(
       state: :active,
       last_checkin_confirmed_at: Time.current,

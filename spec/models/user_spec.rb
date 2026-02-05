@@ -167,11 +167,25 @@ RSpec.describe User, type: :model do
       end
 
       it "clears attempt tracking and delivered timestamps" do
-        user = create(:user, :delivered, checkin_attempts_sent: 3, last_checkin_attempt_at: 2.days.ago)
+        user = create(
+          :user,
+          :in_grace,
+          checkin_attempts_sent: 3,
+          last_checkin_attempt_at: 2.days.ago,
+          delivered_at: 2.days.ago
+        )
         user.confirm_checkin!
         expect(user.last_checkin_attempt_at).to be_nil
         expect(user.checkin_attempts_sent).to eq(0)
         expect(user.delivered_at).to be_nil
+      end
+
+      it "does not reactivate delivered users" do
+        user = create(:user, :delivered, delivered_at: Time.current)
+        delivered_at = user.delivered_at
+
+        expect { user.confirm_checkin! }.not_to change(user, :state)
+        expect(user.reload.delivered_at).to eq(delivered_at)
       end
     end
 
