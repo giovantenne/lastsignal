@@ -1,5 +1,5 @@
 # Development stack with Mailhog for email testing
-# Usage: docker compose -f docker-compose.dev.yml up --build
+# Usage: docker compose -f docker-compose.dev.yaml up --build
 #
 # App:     http://localhost:3000
 # Mailhog: http://localhost:8025

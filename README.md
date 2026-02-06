@@ -97,7 +97,7 @@ The email opens in your browser automatically via `letter_opener`.
 If you want to try the app without installing Ruby locally, use the dev compose stack with [Mailhog](https://github.com/mailhog/MailHog):
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.dev.yaml up --build
 ```
 
 Then open:
@@ -126,10 +126,10 @@ bin/rails demo:checkins:deliver EMAIL=you@example.com`
 Docker commands:
 
 ```bash
-docker compose -f docker-compose.dev.yml exec app bin/rails demo:checkins:status EMAIL=you@example.com
-docker compose -f docker-compose.dev.yml exec app bin/rails demo:checkins:advance EMAIL=you@example.com
-docker compose -f docker-compose.dev.yml exec app bin/rails demo:checkins:advance_days EMAIL=you@example.com DAYS=7
-docker compose -f docker-compose.dev.yml exec app bin/rails demo:checkins:deliver EMAIL=you@example.com
+docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:status EMAIL=you@example.com
+docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:advance EMAIL=you@example.com
+docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:advance_days EMAIL=you@example.com DAYS=7
+docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:deliver EMAIL=you@example.com
 ```
 
 Notes:
@@ -207,6 +207,39 @@ bin/kamal logs
 ```
 
 Health check: `https://YOUR_DOMAIN/up`
+
+## 🐳 Production Deployment (docker-compose)
+
+If you prefer not to use Kamal, you can deploy with docker-compose using the provided `docker-compose.prod.yaml`.
+
+```bash
+# Copy and configure environment
+cp .env.production.example .env.production
+# Edit .env.production with your values (you can ignore KAMAL_* variables)
+
+# Start the stack
+docker compose -f docker-compose.prod.yaml --env-file .env.production up -d --build
+
+# Prepare databases (first run only)
+docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare
+docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=cache
+docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=queue
+
+# View logs
+docker compose -f docker-compose.prod.yaml logs -f
+```
+
+### Reverse Proxy (SSL/TLS)
+
+For production, place a reverse proxy (nginx, Caddy, Traefik) in front of the app to handle HTTPS. Example with Caddy:
+
+```
+yourdomain.com {
+    reverse_proxy localhost:80
+}
+```
+
+Caddy automatically provisions Let's Encrypt certificates.
 
 ## 📮 Email Deliverability Checklist
 
