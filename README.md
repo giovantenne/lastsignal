@@ -1,6 +1,6 @@
 # <img src="https://lastsignal.app/logo-mark.svg" alt="LastSignal" width="50" height="50" align="absmiddle" /> LastSignal
 
-[![Ruby](https://img.shields.io/badge/Ruby-3.4-red.svg)](https://www.ruby-lang.org/) [![Rails](https://img.shields.io/badge/Rails-8-red.svg)](https://rubyonrails.org/) [![Database](https://img.shields.io/badge/Database-SQLite-blue.svg)](https://www.sqlite.org/) [![Crypto](https://img.shields.io/badge/Crypto-libsodium-black.svg)](https://libsodium.gitbook.io/doc/) [![Deploy](https://img.shields.io/badge/Deploy-Kamal-success.svg)](https://kamal-deploy.org/) [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](https://mariadb.com/bsl11/)
+[![Ruby](https://img.shields.io/badge/Ruby-3.4-red.svg)](https://www.ruby-lang.org/) [![Rails](https://img.shields.io/badge/Rails-8-red.svg)](https://rubyonrails.org/) [![Database](https://img.shields.io/badge/Database-SQLite-blue.svg)](https://www.sqlite.org/) [![Crypto](https://img.shields.io/badge/Crypto-libsodium-black.svg)](https://libsodium.gitbook.io/doc/) [![Deploy](https://img.shields.io/badge/Deploy-Kamal-success.svg)](https://kamal-deploy.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 LastSignal is a self-hosted, email-first dead man's switch. You write encrypted messages for the people you care about. If you stop responding to email check-ins, LastSignal delivers those messages automatically.
 
@@ -280,7 +280,7 @@ Contributions welcome! Please open an issue first to discuss changes.
 
 ## 📄 License
 
-This project is licensed under the Business Source License 1.1 (BSL 1.1). Commercial use and offering this software as a hosted service require prior written permission. On 2031-01-23 the license changes to MIT.
+This project is licensed under the MIT License.
 
 See [LICENSE](LICENSE) for details.
 
