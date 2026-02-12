@@ -186,10 +186,12 @@
       statusText.textContent = 'Registering your key...';
 
       // Submit to server
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
       const response = await fetch(`/invites/${inviteData.token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify({
           public_key_b64u: publicKeyB64u,

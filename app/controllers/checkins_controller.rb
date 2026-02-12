@@ -14,7 +14,11 @@ class CheckinsController < ApplicationController
 
   # POST /checkin/confirm/:token
   def complete
-    @user.confirm_checkin!
+    # Pessimistic lock to prevent race condition with ProcessCheckinsJob#mark_delivered!
+    User.transaction do
+      @user.lock!
+      @user.confirm_checkin!
+    end
 
     AuditLog.log(
       action: "checkin_confirmed",
@@ -35,7 +39,14 @@ class CheckinsController < ApplicationController
 
   def load_user_from_token
     token = params[:token].presence || params[:checkin_token].presence
-    token_digest = Digest::SHA256.hexdigest(token.to_s)
+
+    if token.blank?
+      flash[:alert] = "Invalid or expired check-in link."
+      redirect_to login_path
+      return
+    end
+
+    token_digest = Digest::SHA256.hexdigest(token)
 
     user = User.find_by(checkin_token_digest: token_digest)
 

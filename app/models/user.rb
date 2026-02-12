@@ -193,7 +193,7 @@ class User < ApplicationRecord
   # Emergency stop using recovery code (no email required)
   # Sets state to paused since user likely lost email access
   def emergency_stop!
-    return if paused?
+    return if paused? || delivered?
 
     update!(
       state: :paused,

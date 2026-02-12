@@ -63,6 +63,9 @@ class AuthController < ApplicationController
       # Mark token as used (single-use)
       token.mark_used!
 
+      # Prevent session fixation: invalidate old session before authenticating
+      reset_session
+
       # Create session
       session[:user_id] = token.user_id
       session[:created_at] = Time.current.to_i

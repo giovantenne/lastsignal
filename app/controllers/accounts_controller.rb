@@ -34,16 +34,14 @@ class AccountsController < ApplicationController
   def destroy
     @user = current_user
 
-    # Mark all messages as cancelled/deleted before destroying user
-    # This prevents orphaned data
-    @user.messages.destroy_all if @user.respond_to?(:messages)
-    @user.recipients.destroy_all if @user.respond_to?(:recipients)
-    @user.magic_link_tokens.destroy_all
+    # Wrap in transaction so partial deletion cannot occur.
+    # User model has dependent: :destroy on all associations,
+    # so @user.destroy! cascades to messages, recipients, tokens, etc.
+    ActiveRecord::Base.transaction do
+      @user.destroy!
+    end
 
-    @user.destroy!
-
-    session.delete(:user_id)
-    session.delete(:created_at)
+    reset_session
 
     flash[:notice] = "Your account has been deleted."
     redirect_to login_path

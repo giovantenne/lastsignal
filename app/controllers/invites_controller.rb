@@ -2,7 +2,6 @@
 
 class InvitesController < ApplicationController
   layout "public"
-  skip_before_action :verify_authenticity_token, only: [ :accept ] # API-style POST
 
   # GET /invites/:token
   def show
