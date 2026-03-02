@@ -2,7 +2,7 @@
 
 class RecipientsController < ApplicationController
   before_action :require_authentication
-  before_action :prevent_delivered_actions, only: [ :new, :create, :destroy, :resend_invite ]
+  before_action :prevent_delivered_actions, only: [ :new, :create, :edit, :update, :destroy, :resend_invite ]
   before_action :set_recipient, only: [ :show, :edit, :update, :destroy, :resend_invite ]
 
   # GET /recipients
