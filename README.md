@@ -6,6 +6,11 @@ LastSignal is a self-hosted, email-first dead man's switch. You write encrypted 
 
 Website: [lastsignal.app](https://lastsignal.app)
 
+> [!IMPORTANT]
+> **LastSignal is open source and self-hosted.**
+> The authors do **not** offer any hosted service, SaaS, paid subscription, or commercial instance of LastSignal.
+> If you see LastSignal presented elsewhere as a paid hosted product, it is **not** an official LastSignal service.
+
 ## 📬 Email-First Flow (Quick Overview)
 
 1) System emails you periodic check-ins.
