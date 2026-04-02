@@ -6,6 +6,7 @@ class CheckinsController < ApplicationController
   layout "public"
 
   before_action :load_user_from_token, except: :success
+  after_action :prevent_public_checkin_caching
 
   # GET /checkin/confirm/:token
   def confirm
@@ -14,10 +15,31 @@ class CheckinsController < ApplicationController
 
   # POST /checkin/confirm/:token
   def complete
+    token_stale = false
+
     # Pessimistic lock to prevent race condition with ProcessCheckinsJob#mark_delivered!
     User.transaction do
       @user.lock!
+      unless current_checkin_token_valid_for_user?
+        token_stale = true
+        raise ActiveRecord::Rollback
+      end
+
       @user.confirm_checkin!
+    end
+
+    if token_stale
+      AuditLog.log(
+        action: "checkin_token_invalid",
+        user: @user,
+        actor_type: "user",
+        metadata: { reason: "stale" },
+        request: request
+      )
+
+      flash[:alert] = "Invalid or expired check-in link."
+      redirect_to login_path
+      return
     end
 
     AuditLog.log(
@@ -64,5 +86,18 @@ class CheckinsController < ApplicationController
     end
 
     @user = user
+    @token_digest = token_digest
+  end
+
+  def current_checkin_token_valid_for_user?
+    digest = @user.checkin_token_digest
+    return false if digest.blank?
+    return false unless digest.bytesize == @token_digest.to_s.bytesize
+
+    ActiveSupport::SecurityUtils.secure_compare(digest, @token_digest)
+  end
+
+  def prevent_public_checkin_caching
+    set_no_store_cache_headers
   end
 end

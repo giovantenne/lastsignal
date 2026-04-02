@@ -7,6 +7,7 @@ RSpec.describe "Emergency", type: :request do
     it "renders the emergency stop form" do
       get emergency_path
       expect(response).to have_http_status(:ok)
+      expect(response.headers["Cache-Control"]).to include("no-store")
       expect(response.body).to include("Emergency Stop")
       expect(response.body).to include("recovery_code")
     end

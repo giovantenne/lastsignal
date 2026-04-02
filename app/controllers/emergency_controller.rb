@@ -5,6 +5,7 @@ class EmergencyController < ApplicationController
   # This controller uses the public layout by default
 
   layout "public"
+  after_action :prevent_emergency_caching
 
   # GET /emergency
   # Shows the emergency stop form
@@ -26,9 +27,9 @@ class EmergencyController < ApplicationController
 
     # Constant-time failure to prevent user enumeration
     unless user
-      # Simulate work to prevent timing attacks
-      Digest::SHA256.hexdigest(recovery_code.to_s)
-      sleep(rand(0.1..0.3))
+      normalized = recovery_code.to_s.gsub("-", "").upcase
+      digest = Digest::SHA256.hexdigest(normalized)
+      ActiveSupport::SecurityUtils.secure_compare(digest, "0" * 64)
       flash.now[:alert] = "Invalid email or recovery code."
       return render :show, status: :unprocessable_entity
     end
@@ -50,5 +51,11 @@ class EmergencyController < ApplicationController
       flash.now[:alert] = "Invalid email or recovery code."
       render :show, status: :unprocessable_entity
     end
+  end
+
+  private
+
+  def prevent_emergency_caching
+    set_no_store_cache_headers
   end
 end

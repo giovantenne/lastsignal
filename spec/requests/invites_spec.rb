@@ -44,6 +44,13 @@ RSpec.describe "Invites", type: :request do
 
       expect(response).to have_http_status(:gone)
     end
+
+    it "rejects malformed kdf params" do
+      post accept_invite_path(token: raw_token), params: valid_params.merge(kdf_params: "{invalid")
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)["error"]).to eq("Invalid key derivation parameters.")
+    end
   end
 
   describe "GET /invites/:token" do
@@ -55,6 +62,7 @@ RSpec.describe "Invites", type: :request do
       get accept_invite_path(token: raw_token)
 
       expect(response).to have_http_status(:success)
+      expect(response.headers["Cache-Control"]).to include("no-store")
     end
 
     it "redirects for invalid token" do

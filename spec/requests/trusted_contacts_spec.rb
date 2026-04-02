@@ -17,6 +17,7 @@ RSpec.describe "Trusted Contact", type: :request do
       get trusted_contact_path(token: raw_token)
 
       expect(response).to have_http_status(:ok)
+      expect(response.headers["Cache-Control"]).to include("no-store")
       expect(response.body).to include("Confirm status")
     end
   end

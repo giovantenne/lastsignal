@@ -40,6 +40,22 @@ class MagicLinkToken < ApplicationRecord
     token
   end
 
+  # Atomically consume a valid token and return it.
+  # Returns nil if the token is blank, expired, or already used.
+  def self.consume(raw_token)
+    return nil if raw_token.blank?
+
+    token_digest = digest(raw_token)
+
+    transaction do
+      token = valid_tokens.lock.find_by(token_digest: token_digest)
+      return nil unless token
+
+      token.update!(used_at: Time.current)
+      token
+    end
+  end
+
   # Mark the token as used
   def mark_used!
     update!(used_at: Time.current)

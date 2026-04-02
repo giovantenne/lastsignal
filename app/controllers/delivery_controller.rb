@@ -2,6 +2,7 @@
 
 class DeliveryController < ApplicationController
   layout "public"
+  after_action :prevent_delivery_caching
 
   # GET /delivery/:token
   def show
@@ -65,6 +66,7 @@ class DeliveryController < ApplicationController
 
     recipient = delivery_token.recipient
     sender = recipient.user
+    delivery_token.record_access!
 
     # Get only available message recipients
     available_mrs = recipient.message_recipients
@@ -96,5 +98,11 @@ class DeliveryController < ApplicationController
       sender_email: sender.email,
       messages: payloads
     }
+  end
+
+  private
+
+  def prevent_delivery_caching
+    set_no_store_cache_headers
   end
 end

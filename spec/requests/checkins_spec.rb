@@ -15,6 +15,7 @@ RSpec.describe "Check-ins", type: :request do
       get confirm_checkin_path(token: raw_token)
 
       expect(response).to have_http_status(:ok)
+      expect(response.headers["Cache-Control"]).to include("no-store")
       expect(response.body).to include("Confirm your check-in")
       expect(user.reload.last_checkin_confirmed_at).to be_nil
     end
