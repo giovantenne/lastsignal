@@ -133,6 +133,77 @@
     </dl>
   </div>
 
+  <!-- External Check-in -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-2">External Check-in (optional)</h2>
+    <p class="text-sm text-gray-600 mb-6">
+      Advanced feature for automations. External systems can send a keep-alive signal.
+    </p>
+
+    <% if @external_checkin_token.present? %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <p class="text-sm font-medium text-yellow-800 mb-2">
+          Copy this token now. It will not be shown again.
+        </p>
+        <code class="block text-xs text-yellow-900 bg-white border border-yellow-200 rounded px-3 py-2 break-all"><%= @external_checkin_token %></code>
+      </div>
+    <% end %>
+
+    <dl class="space-y-4">
+      <div class="flex justify-between">
+        <dt class="text-sm font-medium text-gray-500">Status</dt>
+        <dd class="text-sm text-gray-900">
+          <%= @user.external_checkin_enabled? ? "Configured" : "Not configured" %>
+        </dd>
+      </div>
+
+      <% if @user.external_checkin_enabled? %>
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Token created</dt>
+          <dd class="text-sm text-gray-900">
+            <%= @user.external_checkin_token_generated_at&.strftime("%B %d, %Y at %H:%M UTC") || "Unknown" %>
+          </dd>
+        </div>
+
+        <div class="flex justify-between">
+          <dt class="text-sm font-medium text-gray-500">Last used</dt>
+          <dd class="text-sm text-gray-900">
+            <%= @user.external_checkin_last_used_at ? @user.external_checkin_last_used_at.strftime("%B %d, %Y at %H:%M UTC") : "Never" %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <div class="mt-6 rounded-lg bg-gray-50 border border-gray-200 p-4">
+      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Example Request</p>
+      <pre class="mt-2 text-xs text-gray-800 whitespace-pre-wrap"><code>curl -X POST \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  <%= "#{AppConfig.app_base_url}/webhooks/keepalive" %></code></pre>
+    </div>
+
+    <p class="mt-4 text-xs text-gray-500">
+      External check-ins work only while your account is active, in grace, or in cooldown. They do not resume a paused account.
+    </p>
+
+    <div class="mt-6 flex flex-wrap gap-3">
+      <%= button_to (@user.external_checkin_enabled? ? "Rotate Token" : "Generate Token"),
+          generate_external_checkin_token_account_path,
+          method: :post,
+          disabled: current_user.delivered?,
+          data: (@user.external_checkin_enabled? ? { turbo_confirm: "Generate a new token? This will invalidate the current one." } : {}),
+          class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" %>
+
+      <% if @user.external_checkin_enabled? %>
+        <%= button_to "Revoke Token",
+            revoke_external_checkin_token_account_path,
+            method: :delete,
+            disabled: current_user.delivered?,
+            data: { turbo_confirm: "Revoke the external check-in token?" },
+            class: "inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed" %>
+      <% end %>
+    </div>
+  </div>
+
   <!-- Trusted Contact Summary -->
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
     <div class="flex items-center justify-between mb-4">

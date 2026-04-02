@@ -18,6 +18,9 @@ module AppConfig
 
   RATE_LIMIT_MAGIC_LINK_PER_IP = 5
   RATE_LIMIT_MAGIC_LINK_PERIOD = 300
+  RATE_LIMIT_EXTERNAL_CHECKIN_PER_IP = 20
+  RATE_LIMIT_EXTERNAL_CHECKIN_PERIOD = 60
+  RATE_LIMIT_EXTERNAL_CHECKIN_PER_TOKEN = 20
 
   ARGON2ID_OPS_LIMIT = 3
   ARGON2ID_MEM_LIMIT = 268_435_456
@@ -136,6 +139,18 @@ module AppConfig
 
     def rate_limit_magic_link_period
       RATE_LIMIT_MAGIC_LINK_PERIOD
+    end
+
+    def rate_limit_external_checkin_per_ip
+      RATE_LIMIT_EXTERNAL_CHECKIN_PER_IP
+    end
+
+    def rate_limit_external_checkin_period
+      RATE_LIMIT_EXTERNAL_CHECKIN_PERIOD
+    end
+
+    def rate_limit_external_checkin_per_token
+      RATE_LIMIT_EXTERNAL_CHECKIN_PER_TOKEN
     end
 
     # Crypto (Argon2id parameters for client-side JS)

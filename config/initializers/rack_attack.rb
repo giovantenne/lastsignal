@@ -86,6 +86,31 @@ class Rack::Attack
     end
   end
 
+  # Throttle external keep-alive endpoint by IP
+  throttle("external_checkin/ip",
+    limit: AppConfig.rate_limit_external_checkin_per_ip,
+    period: AppConfig.rate_limit_external_checkin_period
+  ) do |req|
+    if req.path == "/webhooks/keepalive" && req.post?
+      req.ip
+    end
+  end
+
+  # Throttle external keep-alive requests by token fingerprint as well.
+  throttle("external_checkin/token",
+    limit: AppConfig.rate_limit_external_checkin_per_token,
+    period: AppConfig.rate_limit_external_checkin_period
+  ) do |req|
+    next unless req.path == "/webhooks/keepalive" && req.post?
+
+    authorization = req.get_header("HTTP_AUTHORIZATION").to_s
+    scheme, token = authorization.split(" ", 2)
+    next unless scheme&.casecmp("Bearer")&.zero?
+    next if token.blank?
+
+    Digest::SHA256.hexdigest(token)
+  end
+
   # Throttle emergency stop by IP (strict - potential brute force target)
   throttle("emergency/ip", limit: 5, period: 300) do |req|
     if req.path == "/emergency" && req.post?

@@ -189,6 +189,54 @@ RSpec.describe User, type: :model do
       end
     end
 
+    describe "#generate_external_checkin_token!" do
+      it "returns a token and stores only its digest" do
+        user = create(:user)
+
+        token = user.generate_external_checkin_token!
+
+        expect(token).to be_present
+        expect(user.external_checkin_token_digest).to eq(Digest::SHA256.hexdigest(token))
+        expect(user.external_checkin_token_generated_at).to be_present
+        expect(user.external_checkin_last_used_at).to be_nil
+      end
+    end
+
+    describe "#revoke_external_checkin_token!" do
+      it "clears the external check-in token fields" do
+        user = create(:user)
+        user.generate_external_checkin_token!
+        user.update!(external_checkin_last_used_at: Time.current)
+
+        user.revoke_external_checkin_token!
+
+        expect(user.external_checkin_token_digest).to be_nil
+        expect(user.external_checkin_token_generated_at).to be_nil
+        expect(user.external_checkin_last_used_at).to be_nil
+      end
+    end
+
+    describe "#accept_external_checkin!" do
+      it "confirms check-in and records last use" do
+        user = create(:user, :in_grace)
+
+        freeze_time do
+          expect(user.accept_external_checkin!).to be(true)
+          expect(user.state).to eq("active")
+          expect(user.last_checkin_confirmed_at).to eq(Time.current)
+          expect(user.external_checkin_last_used_at).to eq(Time.current)
+        end
+      end
+
+      it "returns false for paused accounts" do
+        user = create(:user, :paused)
+
+        expect(user.accept_external_checkin!).to be(false)
+        expect(user.reload.state).to eq("paused")
+        expect(user.external_checkin_last_used_at).to be_nil
+      end
+    end
+
     describe "#mark_delivered!" do
       it "transitions from cooldown to delivered" do
         user = create(:user, :in_cooldown)

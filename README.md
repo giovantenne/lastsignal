@@ -18,6 +18,10 @@ Website: [lastsignal.app](https://lastsignal.app)
 3) The final reminder triggers the trusted contact ping (if configured).
 4) If you still don't respond, messages are delivered by email.
 
+For advanced self-hosted setups, you can also generate an optional external keep-alive token and send a
+machine-to-machine check-in to `/webhooks/keepalive`. This is an add-on for automations, not a replacement
+for the default email-first model.
+
 ## 🔒 Security Model
 
 - **End-to-end encrypted** - Server never sees plaintext messages

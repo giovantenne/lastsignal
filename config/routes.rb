@@ -32,6 +32,8 @@ Rails.application.routes.draw do
   resource :account, only: [ :show, :edit, :update, :destroy ] do
     # Recovery code regeneration
     post :regenerate_recovery_code
+    post :generate_external_checkin_token
+    delete :revoke_external_checkin_token
   end
 
   get "audit", to: "audits#index", as: :audit
@@ -87,6 +89,10 @@ Rails.application.routes.draw do
   # ============================================================================
   # Webhooks
   # ============================================================================
+  scope :webhooks do
+    post "keepalive", to: "external_checkins#create", as: :external_keepalive
+  end
+
   # ============================================================================
   # Emergency Stop (public, recovery code based)
   # ============================================================================

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_30_124622) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_03_110000) do
   create_table "audit_logs", force: :cascade do |t|
     t.bigint "user_id"
     t.string "actor_type", null: false
@@ -143,8 +143,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_30_124622) do
     t.integer "checkin_attempt_interval_hours"
     t.integer "checkin_attempts_sent", default: 0, null: false
     t.datetime "last_checkin_attempt_at"
+    t.string "external_checkin_token_digest"
+    t.datetime "external_checkin_token_generated_at"
+    t.datetime "external_checkin_last_used_at"
     t.index ["checkin_token_digest"], name: "index_users_on_checkin_token_digest", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["external_checkin_token_digest"], name: "index_users_on_external_checkin_token_digest", unique: true
     t.index ["next_checkin_at"], name: "index_users_on_next_checkin_at"
     t.index ["state", "next_checkin_at"], name: "index_users_on_state_and_next_checkin_at"
     t.index ["state"], name: "index_users_on_state"

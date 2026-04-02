@@ -7,6 +7,8 @@ class ApplicationController < ActionController::Base
   # Make authentication helpers available in views
   helper_method :current_user, :logged_in?
 
+  after_action :prevent_authenticated_page_caching
+
   private
 
   # Returns the currently logged-in user, or nil if not logged in
@@ -49,5 +51,24 @@ class ApplicationController < ActionController::Base
       flash[:alert] = message
       redirect_to dashboard_path
     end
+  end
+
+  def prevent_authenticated_page_caching
+    return unless request.format.html?
+    return unless logged_in?
+
+    set_no_store_cache_headers
+  end
+
+  def set_no_store_cache_headers
+    response.cache_control.replace(
+      no_store: true,
+      no_cache: true,
+      private: true,
+      must_revalidate: true,
+      max_age: 0
+    )
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
   end
 end

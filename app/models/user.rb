@@ -79,6 +79,12 @@ class User < ApplicationRecord
       .where(checkin_attempt_due_condition(:cooldown_warning_sent_at))
   }
 
+  def self.find_by_external_checkin_token(raw_token)
+    return nil if raw_token.blank?
+
+    find_by(external_checkin_token_digest: Digest::SHA256.hexdigest(raw_token))
+  end
+
   def self.checkin_attempt_due_condition(column)
     adapter = connection.adapter_name.downcase
     column_node = arel_table[column]
@@ -245,6 +251,42 @@ class User < ApplicationRecord
 
   def trusted_contact_pause_active?
     trusted_contact&.pause_active? || false
+  end
+
+  def external_checkin_enabled?
+    external_checkin_token_digest.present?
+  end
+
+  def can_accept_external_checkin?
+    active? || grace? || cooldown?
+  end
+
+  def generate_external_checkin_token!
+    raw_token = SecureRandom.urlsafe_base64(32)
+
+    update!(
+      external_checkin_token_digest: Digest::SHA256.hexdigest(raw_token),
+      external_checkin_token_generated_at: Time.current,
+      external_checkin_last_used_at: nil
+    )
+
+    raw_token
+  end
+
+  def revoke_external_checkin_token!
+    update!(
+      external_checkin_token_digest: nil,
+      external_checkin_token_generated_at: nil,
+      external_checkin_last_used_at: nil
+    )
+  end
+
+  def accept_external_checkin!
+    return false unless can_accept_external_checkin?
+
+    confirm_checkin!
+    update_column(:external_checkin_last_used_at, Time.current)
+    true
   end
 
   # Recovery code methods

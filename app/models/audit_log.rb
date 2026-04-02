@@ -3,7 +3,7 @@
 class AuditLog < ApplicationRecord
   belongs_to :user, optional: true
 
-  ACTOR_TYPES = %w[user system recipient trusted_contact].freeze
+  ACTOR_TYPES = %w[user system recipient trusted_contact automation].freeze
   ACTIONS = %w[
     login_requested
     login_success
@@ -39,6 +39,10 @@ class AuditLog < ApplicationRecord
     account_deleted
     checkin_resumed_for_messages
     checkin_token_invalid
+    external_checkin_received
+    external_checkin_token_generated
+    external_checkin_token_invalid
+    external_checkin_token_revoked
     delivery_token_invalid
     invite_token_invalid
   ].freeze
