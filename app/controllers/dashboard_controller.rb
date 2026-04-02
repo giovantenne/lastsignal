@@ -10,8 +10,8 @@ class DashboardController < ApplicationController
     @messages_count = current_user.messages.count
     @has_active_messages = current_user.has_active_messages?
 
-    # Check if we need to show the recovery code
-    @show_recovery_code = session[:show_recovery_code]
+    # Legacy fallback for sessions created before secret reveal hardening.
+    @show_recovery_code = session.delete(:show_recovery_code)
   end
 
   # POST /dashboard/acknowledge_recovery_code

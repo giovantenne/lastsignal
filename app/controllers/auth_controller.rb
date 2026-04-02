@@ -2,6 +2,7 @@
 
 class AuthController < ApplicationController
   before_action :redirect_if_authenticated, only: [ :new, :create, :verify ]
+  after_action :prevent_magic_link_caching, only: :verify
 
   # GET /auth/login
   def new
@@ -52,7 +53,7 @@ class AuthController < ApplicationController
   # GET /auth/verify/:token
   def verify
     raw_token = params[:token]
-    token = MagicLinkToken.find_and_verify(raw_token)
+    token = MagicLinkToken.consume(raw_token)
 
     if token
       unless AppConfig.allowlisted_email?(token.user.email)
@@ -60,15 +61,13 @@ class AuthController < ApplicationController
         return redirect_to login_path
       end
 
-      # Mark token as used (single-use)
-      token.mark_used!
-
       # Prevent session fixation: invalidate old session before authenticating
       reset_session
 
       # Create session
       session[:user_id] = token.user_id
       session[:created_at] = Time.current.to_i
+      @current_user = token.user
 
       # Treat login as a check-in
       token.user.confirm_checkin!
@@ -82,9 +81,7 @@ class AuthController < ApplicationController
 
       # Check if user needs to see their recovery code
       if !token.user.recovery_code_viewed?
-        # Generate a fresh code and store in session for display
-        session[:show_recovery_code] = token.user.generate_recovery_code!
-        redirect_to dashboard_path
+        render_recovery_code_dashboard(token.user, token.user.generate_recovery_code!)
       else
         flash[:notice] = "You're now signed in."
         redirect_to dashboard_path
@@ -111,5 +108,22 @@ class AuthController < ApplicationController
 
     flash[:notice] = "You have been signed out."
     redirect_to login_path
+  end
+
+  private
+
+  def render_recovery_code_dashboard(user, recovery_code)
+    @user = user
+    @recipients_count = user.recipients.accepted.count
+    @messages_count = user.messages.count
+    @has_active_messages = user.has_active_messages?
+    @show_recovery_code = recovery_code
+
+    flash.now[:notice] = "Recovery code generated. Save it in a safe place."
+    render "dashboard/show", status: :ok
+  end
+
+  def prevent_magic_link_caching
+    set_no_store_cache_headers
   end
 end

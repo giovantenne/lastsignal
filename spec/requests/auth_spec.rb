@@ -171,9 +171,11 @@ RSpec.describe "Auth", type: :request do
         expect(token.reload.used?).to be true
       end
 
-      it "redirects to dashboard" do
+      it "renders the recovery code screen for users who have not saved it yet" do
         get verify_magic_link_path(token: raw_token)
-        expect(response).to redirect_to(dashboard_path)
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Save Your Emergency Recovery Code")
+        expect(response.headers["Cache-Control"]).to include("no-store")
       end
 
       it "creates audit log" do
@@ -189,6 +191,15 @@ RSpec.describe "Auth", type: :request do
           get verify_magic_link_path(token: raw_token)
           expect(user.reload.last_checkin_confirmed_at).to eq(Time.current)
         end
+      end
+
+      it "redirects to dashboard when the recovery code was already acknowledged" do
+        user.update!(recovery_code_viewed_at: Time.current)
+
+        get verify_magic_link_path(token: raw_token)
+
+        expect(response).to redirect_to(dashboard_path)
+        expect(response.headers["Cache-Control"]).to include("no-store")
       end
     end
 
