@@ -57,6 +57,7 @@ jobs:
           FORCE: ${{ inputs.force }}
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         run: |
+          IMAGE="${IMAGE,,}"  # registry names are lowercase
           # The base image the Dockerfile builds from, and what its tag points
           # at today (digest of the index).
           version=$(sed -n 's/^ARG RUBY_VERSION=\(.*\)/\1/p' Dockerfile | head -n1)
@@ -132,6 +133,7 @@ jobs:
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         run: |
+          IMAGE="${IMAGE,,}"  # registry names are lowercase
           short=$(git rev-parse --short=7 HEAD)
           n=1
           while true; do
