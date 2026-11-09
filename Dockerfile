@@ -14,8 +14,9 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base packages (upgrade first: the rebuild workflow picks up OS fixes)
 RUN apt-get update -qq && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 libvips && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
