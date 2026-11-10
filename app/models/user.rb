@@ -172,17 +172,37 @@ class User < ApplicationRecord
   def confirm_checkin!
     return if delivered?
 
-    update!(
-      state: :active,
-      last_checkin_confirmed_at: Time.current,
-      next_checkin_at: Time.current + effective_checkin_interval_hours.hours,
-      cooldown_warning_sent_at: nil,
-      delivery_notice_sent_at: nil,
-      delivered_at: nil,
-      checkin_token_digest: nil,
-      checkin_attempts_sent: 0,
-      last_checkin_attempt_at: nil
-    )
+    reset_checkin_cycle!
+  end
+
+  # Way out of the delivered state. Requires the recovery code (held offline)
+  # so that someone with inbox access alone cannot pull delivered messages
+  # from under recipients. Revokes every active delivery link, then starts a
+  # fresh check-in cycle. Messages, recipients, trusted contact and settings
+  # are kept. Returns true on success, false if not delivered or wrong code.
+  def reset_after_delivery!(recovery_code:)
+    return false unless delivered?
+    return false unless verify_recovery_code(recovery_code)
+
+    transaction do
+      revoked_count = DeliveryToken.active.where(recipient_id: recipients.select(:id))
+                                   .update_all(revoked_at: Time.current)
+      previously_delivered_at = delivered_at
+
+      reset_checkin_cycle!
+
+      AuditLog.log(
+        action: "state_reset_after_delivery",
+        user: self,
+        actor_type: "user",
+        metadata: {
+          delivered_at: previously_delivered_at&.iso8601,
+          revoked_delivery_links: revoked_count
+        }
+      )
+    end
+
+    true
   end
 
   # State transition: cooldown -> delivered
@@ -355,6 +375,20 @@ class User < ApplicationRecord
   end
 
   private
+
+  def reset_checkin_cycle!
+    update!(
+      state: :active,
+      last_checkin_confirmed_at: Time.current,
+      next_checkin_at: Time.current + effective_checkin_interval_hours.hours,
+      cooldown_warning_sent_at: nil,
+      delivery_notice_sent_at: nil,
+      delivered_at: nil,
+      checkin_token_digest: nil,
+      checkin_attempts_sent: 0,
+      last_checkin_attempt_at: nil
+    )
+  end
 
   def normalize_email
     self.email = email&.downcase&.strip

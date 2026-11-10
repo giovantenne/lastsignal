@@ -34,6 +34,8 @@ Rails.application.routes.draw do
     post :regenerate_recovery_code
     post :generate_external_checkin_token
     delete :revoke_external_checkin_token
+    # Way out of the delivered state (requires recovery code)
+    post :reset_after_delivery
   end
 
   get "audit", to: "audits#index", as: :audit
