@@ -67,6 +67,14 @@ If the trusted contact confirms on May 16:
 
 **Recipient-specific delay**: You can also set a delay (in days) per recipient. This delays when the recipient can decrypt the message after delivery—useful for staggered access or time-sensitive information.
 
+### After Delivery
+
+Once messages are delivered the account becomes **read-only on purpose**: messages, recipients and settings can no
+longer be edited, so nobody who gains access to your inbox afterwards can pull delivered messages from under your
+recipients (some of whom may still be waiting on a decrypt delay). The only way out is from the dashboard, with your
+**recovery code**: you can either *reset* the account (revokes every delivery link and starts a fresh check-in cycle,
+keeping your data) or *delete* it. The magic-link login alone is not enough.
+
 ## 🧪 Development
 
 This runs a local dev stack and opens emails in your browser using [letter_opener](https://github.com/ryanb/letter_opener).

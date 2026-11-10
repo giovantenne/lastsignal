@@ -98,6 +98,70 @@
     </div>
   <% end %>
 
+  <% if @user.delivered? %>
+    <!-- Delivered State Card -->
+    <div class="bg-gray-50 border-2 border-gray-300 rounded-lg p-6 mb-8">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <div class="ml-4 flex-1">
+          <h3 class="text-lg font-bold text-gray-800">Messages Delivered: Account Is Read-Only</h3>
+          <p class="mt-2 text-sm text-gray-700">
+            Your messages were delivered to your recipients<%= " on #{@user.delivered_at.strftime('%b %d, %Y')}" if @user.delivered_at %>.
+            Messages, recipients and settings are locked on purpose, so nobody who gains access to your inbox
+            can pull delivered messages from under your recipients.
+            To leave this state you need your <strong>emergency recovery code</strong>.
+          </p>
+
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-md border border-gray-200 p-4">
+              <h4 class="text-sm font-semibold text-gray-900">Reset account</h4>
+              <p class="mt-1 text-xs text-gray-600">
+                Revokes every delivery link sent to your recipients and starts a fresh check-in cycle.
+                Your messages, recipients and settings are kept.
+              </p>
+              <%= form_with url: reset_after_delivery_account_path, method: :post, class: "mt-3",
+                  data: { turbo_confirm: "Reset your account? All delivery links will stop working and check-ins will restart." } do |f| %>
+                <%= f.label :recovery_code, "Recovery code", class: "sr-only" %>
+                <%= f.text_field :recovery_code, required: true, autocomplete: "off", spellcheck: false,
+                    placeholder: "XXXX-XXXX-XXXX-XXXX",
+                    class: "block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm uppercase focus:border-green-500 focus:ring-green-500" %>
+                <button type="submit" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                  Reset Account
+                </button>
+              <% end %>
+            </div>
+
+            <div class="bg-white rounded-md border border-red-200 p-4">
+              <h4 class="text-sm font-semibold text-red-900">Delete account</h4>
+              <p class="mt-1 text-xs text-red-700">
+                Permanently removes your account, messages and recipients. Delivery links stop working.
+                This cannot be undone.
+              </p>
+              <%= form_with url: account_path, method: :delete, class: "mt-3",
+                  data: { turbo_confirm: "Are you sure you want to delete your account? This cannot be undone." } do |f| %>
+                <%= f.label :recovery_code, "Recovery code", class: "sr-only" %>
+                <%= f.text_field :recovery_code, required: true, autocomplete: "off", spellcheck: false,
+                    placeholder: "XXXX-XXXX-XXXX-XXXX",
+                    class: "block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm uppercase focus:border-red-500 focus:ring-red-500" %>
+                <button type="submit" class="mt-3 inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                  Delete Account
+                </button>
+              <% end %>
+            </div>
+          </div>
+
+          <p class="mt-4 text-xs text-gray-500">
+            Lost your recovery code? There is no other way out of the delivered state: this is what protects your recipients.
+          </p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <!-- Status Card -->
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
     <div class="flex items-center justify-between">
