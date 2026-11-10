@@ -22,7 +22,7 @@ cp .env.production.example .env.production
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d
 
 # Wait until it is up (the container prepares the databases on first start)
-curl -fsS http://YOUR_SERVER/up
+curl -fsS --retry 30 --retry-delay 2 --retry-all-errors http://YOUR_SERVER/up
 
 # View logs
 docker compose -f docker-compose.prod.yaml logs -f
