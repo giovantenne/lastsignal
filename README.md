@@ -188,10 +188,11 @@ You must set:
 - `SMTP_*` (your provider credentials)
 - `ALLOWED_EMAILS` (optional allowlist for private instances)
 
-Generate a master key if you don't have one:
+Generate `RAILS_MASTER_KEY` and `SECRET_KEY_BASE` with `openssl` (no Rails install needed; the repo ships no `config/credentials.yml.enc`, so any random value works):
 
 ```bash
-bin/rails credentials:edit
+openssl rand -hex 32   # RAILS_MASTER_KEY
+openssl rand -hex 64   # SECRET_KEY_BASE
 ```
 
 ### 3) Deploy
@@ -225,6 +226,9 @@ If you prefer not to use Kamal, you can deploy with docker-compose using the pro
 # Copy and configure environment
 cp .env.production.example .env.production
 # Edit .env.production with your values (you can ignore KAMAL_* variables)
+# Generate the two secrets without a Rails install:
+#   openssl rand -hex 32   # RAILS_MASTER_KEY
+#   openssl rand -hex 64   # SECRET_KEY_BASE
 
 # Start the stack
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d --build
