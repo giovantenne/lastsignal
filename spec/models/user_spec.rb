@@ -189,6 +189,112 @@ RSpec.describe User, type: :model do
       end
     end
 
+    describe "#reset_after_delivery!" do
+      let(:user) do
+        create(
+          :user,
+          :delivered,
+          checkin_interval_hours: 168,
+          checkin_attempts_sent: 3,
+          cooldown_warning_sent_at: 3.days.ago,
+          delivery_notice_sent_at: 1.hour.ago,
+          checkin_token_digest: "abc"
+        )
+      end
+      let(:recovery_code) { user.generate_recovery_code! }
+      let(:recipient) { create(:recipient, :accepted, user: user) }
+      let!(:active_token) { create(:delivery_token, recipient: recipient) }
+      let!(:other_user_token) { create(:delivery_token) }
+
+      context "with a valid recovery code" do
+        it "returns true and sets the user back to active with a fresh cycle" do
+          freeze_time do
+            expect(user.reset_after_delivery!(recovery_code: recovery_code)).to be true
+
+            user.reload
+            expect(user.state).to eq("active")
+            expect(user.last_checkin_confirmed_at).to eq(Time.current)
+            expect(user.next_checkin_at).to eq(Time.current + 168.hours)
+            expect(user.delivered_at).to be_nil
+            expect(user.cooldown_warning_sent_at).to be_nil
+            expect(user.delivery_notice_sent_at).to be_nil
+            expect(user.checkin_token_digest).to be_nil
+            expect(user.checkin_attempts_sent).to eq(0)
+            expect(user.last_checkin_attempt_at).to be_nil
+          end
+        end
+
+        it "revokes the user's active delivery tokens only" do
+          user.reset_after_delivery!(recovery_code: recovery_code)
+
+          expect(active_token.reload).to be_revoked
+          expect(other_user_token.reload).not_to be_revoked
+        end
+
+        it "keeps messages, recipients and trusted contact" do
+          message = create(:message, user: user)
+          create(:trusted_contact, user: user)
+
+          user.reset_after_delivery!(recovery_code: recovery_code)
+
+          expect(Message.exists?(message.id)).to be true
+          expect(Recipient.exists?(recipient.id)).to be true
+          expect(user.reload.trusted_contact).to be_present
+        end
+
+        it "does not invalidate the recovery code" do
+          user.reset_after_delivery!(recovery_code: recovery_code)
+          expect(user.reload.verify_recovery_code(recovery_code)).to be true
+        end
+
+        it "writes an audit log entry" do
+          expect {
+            user.reset_after_delivery!(recovery_code: recovery_code)
+          }.to change(AuditLog, :count).by(1)
+
+          audit = AuditLog.last
+          expect(audit.action).to eq("state_reset_after_delivery")
+          expect(audit.user).to eq(user)
+          expect(audit.metadata["revoked_delivery_links"]).to eq(1)
+          expect(audit.metadata["delivered_at"]).to be_present
+        end
+
+        it "accepts codes without dashes and in lowercase" do
+          expect(user.reset_after_delivery!(recovery_code: recovery_code.delete("-").downcase)).to be true
+          expect(user.reload.state).to eq("active")
+        end
+      end
+
+      context "with an invalid recovery code" do
+        before { recovery_code }
+
+        it "returns false and changes nothing" do
+          expect {
+            expect(user.reset_after_delivery!(recovery_code: "WRONG-CODE-0000-0000")).to be false
+          }.not_to change(AuditLog, :count)
+
+          expect(user.reload.state).to eq("delivered")
+          expect(user.delivered_at).to be_present
+          expect(active_token.reload).not_to be_revoked
+        end
+      end
+
+      context "when the user is not delivered" do
+        it "returns false and changes nothing" do
+          active_user = create(:user, :in_cooldown)
+          code = active_user.generate_recovery_code!
+          token = create(:delivery_token, recipient: create(:recipient, :accepted, user: active_user))
+
+          expect {
+            expect(active_user.reset_after_delivery!(recovery_code: code)).to be false
+          }.not_to change(AuditLog, :count)
+
+          expect(active_user.reload.state).to eq("cooldown")
+          expect(token.reload).not_to be_revoked
+        end
+      end
+    end
+
     describe "#generate_external_checkin_token!" do
       it "returns a token and stores only its digest" do
         user = create(:user)

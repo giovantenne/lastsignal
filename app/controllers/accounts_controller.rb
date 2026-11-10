@@ -5,7 +5,6 @@ class AccountsController < ApplicationController
   before_action :prevent_delivered_actions, only: [
     :edit,
     :update,
-    :destroy,
     :regenerate_recovery_code,
     :generate_external_checkin_token,
     :revoke_external_checkin_token
@@ -39,8 +38,15 @@ class AccountsController < ApplicationController
   end
 
   # DELETE /account
+  # While delivered the account is read-only; deleting it pulls delivered
+  # messages from under recipients, so it requires the recovery code.
   def destroy
     @user = current_user
+
+    if @user.delivered? && !@user.verify_recovery_code(params[:recovery_code])
+      flash[:alert] = "Invalid recovery code. Your account was not deleted."
+      return redirect_to dashboard_path
+    end
 
     # Wrap in transaction so partial deletion cannot occur.
     # User model has dependent: :destroy on all associations,
@@ -53,6 +59,24 @@ class AccountsController < ApplicationController
 
     flash[:notice] = "Your account has been deleted."
     redirect_to login_path
+  end
+
+  # POST /account/reset_after_delivery
+  # Leaves the delivered state: revokes delivery links and restarts check-ins.
+  def reset_after_delivery
+    unless current_user.delivered?
+      flash[:alert] = "Your account is not in delivered state."
+      return redirect_to dashboard_path
+    end
+
+    if current_user.reset_after_delivery!(recovery_code: params[:recovery_code])
+      CheckinMailer.reset_after_delivery_notice(current_user).deliver_later
+      flash[:notice] = "Your account is active again. Delivery links were revoked and a new check-in cycle has started."
+    else
+      flash[:alert] = "Invalid recovery code. Your account was not changed."
+    end
+
+    redirect_to dashboard_path
   end
 
   # POST /account/regenerate_recovery_code
