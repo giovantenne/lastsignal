@@ -4,9 +4,9 @@ name: Image
 # Registry as ghcr.io/giovantenne/lastsignal.
 #
 # Tags:
-#   latest        every push to master
-#   sha-<short>   every build, for pinning to an exact commit
-#   X.Y.Z, X.Y    pushes of a vX.Y.Z git tag
+#   X.Y.Z, X.Y, latest   pushes of a vX.Y.Z git tag (a release)
+#   edge                 every push to master
+#   sha-<short>          every build, for pinning to an exact commit
 #
 # Actions are pinned to full commit SHAs; the comment after each is the
 # release it points at. Bump both together.
@@ -51,10 +51,14 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-            type=sha,prefix=sha-
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=edge,enable=${{ github.ref == 'refs/heads/master' }}
+            type=sha,prefix=sha-
+          # latest=auto adds the latest tag only on semver git tags, so latest
+          # always points at a release, never at an unreleased master build.
+          flavor: |
+            latest=auto
           labels: |
             org.opencontainers.image.title=LastSignal
             org.opencontainers.image.licenses=MIT
