@@ -74,4 +74,23 @@ RSpec.describe CheckinMailer, type: :mailer do
       expect(mail.body.encoded).to include("recipient1@example.com")
     end
   end
+
+  describe "#reset_after_delivery_notice" do
+    let(:user) { create(:user, email: "test@example.com", next_checkin_at: 1.week.from_now) }
+    let(:mail) { described_class.reset_after_delivery_notice(user) }
+
+    it "sends to user email" do
+      expect(mail.to).to eq([ "test@example.com" ])
+    end
+
+    it "has reset subject" do
+      expect(mail.subject).to include("reset to active")
+    end
+
+    it "explains what happened and what to do if it wasn't the user" do
+      expect(mail.body.encoded).to include("delivery links")
+      expect(mail.body.encoded).to include("If this wasn")
+      expect(mail.body.encoded).to include(login_url)
+    end
+  end
 end

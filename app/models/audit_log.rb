@@ -16,6 +16,7 @@ class AuditLog < ApplicationRecord
     state_to_grace
     state_to_cooldown
     state_to_delivered
+    state_reset_after_delivery
     checkin_confirmed
     checkin_paused
     checkin_resumed
