@@ -4,10 +4,13 @@
 services:
   app:
     # Both `image` and `build` are set: `docker compose up -d` pulls the
-    # prebuilt amd64 image of the latest release from GHCR (building from
-    # source only if the pull fails), while `docker compose up -d --build` builds locally from this
-    # checkout. Update a running stack with: docker compose pull && docker compose up -d
-    image: ghcr.io/giovantenne/lastsignal:latest
+    # prebuilt image of the latest release from GHCR (published for linux/amd64
+    # and linux/arm64; built from source only if the pull fails), while
+    # `docker compose up -d --build` builds locally from this checkout.
+    # Set LASTSIGNAL_IMAGE_TAG (in .env.production or the shell) to run another
+    # tag, e.g. `edge` for the current master build.
+    # Update a running stack with: docker compose pull && docker compose up -d
+    image: ghcr.io/giovantenne/lastsignal:${LASTSIGNAL_IMAGE_TAG:-latest}
     build: .
     ports:
       - "80:80"
