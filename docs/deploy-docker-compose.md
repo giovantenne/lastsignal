@@ -8,7 +8,7 @@ This is the full version of the [Self-host in 5 minutes](../README.md#-self-host
 
 The stack is defined in the provided `docker-compose.prod.yaml`.
 
-A prebuilt `linux/amd64` image is published to `ghcr.io/giovantenne/lastsignal`. The `latest` tag always points at the most recent release (also available as `X.Y.Z` and `X.Y`), while `edge` tracks every push to `master`. `docker-compose.prod.yaml` references `latest`, so the command below pulls the prebuilt image; add `--build` to build locally from source instead (see [Building from source](#building-from-source--other-architectures)).
+A prebuilt multi-arch image (`linux/amd64` and `linux/arm64`) is published to `ghcr.io/giovantenne/lastsignal`. The `latest` tag always points at the most recent release (also available as `X.Y.Z` and `X.Y`), while `edge` tracks every push to `master`. `docker-compose.prod.yaml` references `latest`, so the command below pulls the prebuilt image; add `--build` to build locally from source instead (see [Building from source](#building-from-source--other-architectures)).
 
 ```bash
 # Copy and configure environment
@@ -21,10 +21,8 @@ cp .env.production.example .env.production
 # Start the stack
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d
 
-# Prepare databases (first run only)
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=cache
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=queue
+# Wait until it is up (the container prepares the databases on first start)
+curl -fsS http://YOUR_SERVER/up
 
 # View logs
 docker compose -f docker-compose.prod.yaml logs -f
@@ -60,22 +58,23 @@ git pull
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d --build
 ```
 
-The container entrypoint (`bin/docker-entrypoint`) runs `bin/rails db:prepare` for the **primary** database every time the app server starts, so migrations to the main database are applied automatically on restart. The `cache` and `queue` databases are separate SQLite files with their own migration paths and are **not** covered by the entrypoint. If a release ships migrations for them, run the two commands again after the update (running all three is harmless; `db:prepare` is idempotent):
-
-```bash
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=cache
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=queue
-```
+The container entrypoint (`bin/docker-entrypoint`) runs `bin/rails db:prepare` every time the app server starts. It creates or migrates all three SQLite databases (primary, `cache` and `queue`), so a release's migrations are applied automatically on restart and no manual command is needed after an update. Do not run `db:prepare` by hand right after the first `up -d`: it races the entrypoint on a fresh volume.
 
 ## Building from source / other architectures
 
-The published image is `linux/amd64` only. On other architectures (for example an arm64 host such as a Raspberry Pi or an Apple Silicon machine), or if you want to run a patched checkout, build the image locally from the repo's `Dockerfile` by adding `--build`:
+The published image is built for `linux/amd64` and `linux/arm64`, so x86-64 servers, Raspberry Pi 4/5 with a 64-bit OS and Apple Silicon hosts all pull a native image with plain `up -d`. On other architectures, or if you want to run a patched checkout, build the image locally from the repo's `Dockerfile` by adding `--build`:
 
 ```bash
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d --build
 ```
 
 `docker-compose.prod.yaml` declares both `image:` and `build: .`, so plain `up -d` pulls the prebuilt image (building from source only if the pull fails), while `up -d --build` always builds from the current checkout. Everything else in this guide is the same for both.
+
+To run a tag other than `latest`, set `LASTSIGNAL_IMAGE_TAG` in `.env.production` or in the shell; for example `LASTSIGNAL_IMAGE_TAG=edge` runs the current `master` build:
+
+```bash
+LASTSIGNAL_IMAGE_TAG=edge docker compose -f docker-compose.prod.yaml --env-file .env.production up -d
+```
 
 ## Email Deliverability Checklist
 
