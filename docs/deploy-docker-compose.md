@@ -6,7 +6,7 @@ This is the full version of the [Self-host in 5 minutes](../README.md#-self-host
 
 ## Quick start
 
-If you prefer not to use Kamal, you can deploy with docker-compose using the provided `docker-compose.prod.yaml`.
+The stack is defined in the provided `docker-compose.prod.yaml`.
 
 A prebuilt `linux/amd64` image is published to `ghcr.io/giovantenne/lastsignal`. The `latest` tag always points at the most recent release (also available as `X.Y.Z` and `X.Y`), while `edge` tracks every push to `master`. `docker-compose.prod.yaml` references `latest`, so the command below pulls the prebuilt image; add `--build` to build locally from source instead (see [Building from source](#building-from-source--other-architectures)).
 
