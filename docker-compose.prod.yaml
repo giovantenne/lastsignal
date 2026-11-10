@@ -3,6 +3,11 @@
 
 services:
   app:
+    # Both `image` and `build` are set: `docker compose up -d` pulls the
+    # prebuilt amd64 image of the latest release from GHCR (building from
+    # source only if the pull fails), while `docker compose up -d --build` builds locally from this
+    # checkout. Update a running stack with: docker compose pull && docker compose up -d
+    image: ghcr.io/giovantenne/lastsignal:latest
     build: .
     ports:
       - "80:80"
