@@ -56,4 +56,16 @@ class CheckinMailer < ApplicationMailer
       subject: "Your #{@app_name} messages were delivered to recipients"
     )
   end
+
+  def reset_after_delivery_notice(user)
+    @user = user
+    @next_checkin_at = user.next_checkin_at
+    @login_url = login_url
+    @app_name = AppConfig.smtp_from_name
+
+    mail(
+      to: user.email,
+      subject: "Your #{@app_name} account was reset to active"
+    )
+  end
 end
