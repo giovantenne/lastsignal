@@ -1,0 +1,88 @@
+name: Image
+
+# Builds the production Dockerfile and publishes it to GitHub Container
+# Registry as ghcr.io/giovantenne/lastsignal.
+#
+# Tags:
+#   latest        every push to master
+#   sha-<short>   every build, for pinning to an exact commit
+#   X.Y.Z, X.Y    pushes of a vX.Y.Z git tag
+#
+# Actions are pinned to full commit SHAs; the comment after each is the
+# release it points at. Bump both together.
+on:
+  push:
+    branches: [ master ]
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Registry names must be lowercase; metadata-action lowercases the
+      # image name for us. It also adds the OCI source, revision, created and
+      # version labels from the git context.
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+          labels: |
+            org.opencontainers.image.title=LastSignal
+            org.opencontainers.image.licenses=MIT
+
+      # amd64 only for now: the native gems take far too long to compile under
+      # QEMU emulation. arm64 can be added to `platforms` later (ideally on a
+      # native arm64 runner).
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # BuildKit's own provenance would wrap the image in an index; the
+          # signed attestation below is attached separately instead.
+          provenance: false
+
+      # subject-name must be lowercase and is not normalised here. The
+      # repository is giovantenne/lastsignal, already lowercase, so
+      # github.repository can be used as is.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

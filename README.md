@@ -221,6 +221,8 @@ Health check: `https://YOUR_DOMAIN/up`
 
 If you prefer not to use Kamal, you can deploy with docker-compose using the provided `docker-compose.prod.yaml`.
 
+A prebuilt `linux/amd64` image is published to `ghcr.io/giovantenne/lastsignal` on every push to `master` (tag `latest`) and on every release (tags `vX.Y.Z`). `docker-compose.prod.yaml` references it, so you can drop `--build` from the command below to use the prebuilt image instead of building locally, and update later with `docker compose -f docker-compose.prod.yaml pull && docker compose -f docker-compose.prod.yaml up -d`.
+
 ```bash
 # Copy and configure environment
 cp .env.production.example .env.production
