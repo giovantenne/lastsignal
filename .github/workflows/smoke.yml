@@ -1,0 +1,168 @@
+name: Smoke test
+
+# Runs the README's "Self-host in 5 minutes" flow end to end, on an amd64 and
+# on an arm64 runner: copy the example env file, fill in the required values,
+# `docker compose up`, wait until http://localhost/up answers 200 and check
+# that the entrypoint created all three SQLite databases.
+#
+# Two modes, chosen by the event that triggered the run:
+#
+#   pull_request / workflow_dispatch   build-from-source mode. The PR's image
+#                                      is not published, so the stack is
+#                                      started with `up -d --build`.
+#   workflow_run (Image completed)     prebuilt mode. Pulls the `edge` image
+#                                      the Image workflow just published and
+#                                      starts it with plain `up -d`, the way
+#                                      the README does. The pulled image's
+#                                      architecture must match the runner.
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - bin/docker-entrypoint
+      - docker-compose.prod.yaml
+      - .env.production.example
+      - Gemfile*
+      - .github/workflows/smoke.yml
+  workflow_dispatch:
+  workflow_run:
+    workflows: [ "Image" ]
+    types: [ completed ]
+
+permissions:
+  contents: read
+
+jobs:
+  compose:
+    # On workflow_run only test an image that was actually published.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ ubuntu-latest, ubuntu-24.04-arm ]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose -f docker-compose.prod.yaml --env-file .env.production
+      PREBUILT: ${{ github.event_name == 'workflow_run' }}
+      # Compose interpolates this into the image reference in
+      # docker-compose.prod.yaml. Empty falls back to the default (latest); it
+      # only matters in prebuilt mode, where the fresh master build is wanted.
+      LASTSIGNAL_IMAGE_TAG: ${{ github.event_name == 'workflow_run' && 'edge' || '' }}
+
+    steps:
+      # On workflow_run, check out the commit the Image workflow built so the
+      # compose file matches the image. Elsewhere the default ref is right.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || '' }}
+
+      - name: Show environment
+        run: |
+          uname -m
+          docker version
+          docker compose version
+          echo "mode: $([ "$PREBUILT" = true ] && echo prebuilt || echo build-from-source)"
+
+      # README step 2. The SMTP_* placeholders from the example file are kept:
+      # they point at a dummy host, which is fine because the app only opens an
+      # SMTP connection when it sends mail, never at boot.
+      - name: Configure .env.production
+        run: |
+          cp .env.production.example .env.production
+          sed -i \
+            -e "s|^RAILS_MASTER_KEY=.*|RAILS_MASTER_KEY=$(openssl rand -hex 32)|" \
+            -e "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=$(openssl rand -hex 64)|" \
+            -e "s|^APP_BASE_URL=.*|APP_BASE_URL=http://localhost|" \
+            -e "s|^APP_HOST=.*|APP_HOST=localhost|" \
+            .env.production
+          grep -E '^(APP_BASE_URL|APP_HOST|SMTP_HOST|SMTP_PORT)=' .env.production
+
+      - name: Pull the published image
+        if: env.PREBUILT == 'true'
+        run: |
+          $COMPOSE pull
+          image="ghcr.io/giovantenne/lastsignal:${LASTSIGNAL_IMAGE_TAG}"
+          case "$(uname -m)" in
+            x86_64)  want=amd64 ;;
+            aarch64) want=arm64 ;;
+            *)       want="$(uname -m)" ;;
+          esac
+          got="$(docker image inspect --format '{{.Architecture}}' "$image")"
+          echo "runner wants $want, $image is $got"
+          if [ "$got" != "$want" ]; then
+            echo "::error::pulled image architecture ($got) does not match the runner ($want)"
+            exit 1
+          fi
+
+      # README step 3, in the two variants.
+      - name: Start the stack (prebuilt image)
+        if: env.PREBUILT == 'true'
+        run: $COMPOSE up -d
+
+      - name: Start the stack (build from source)
+        if: env.PREBUILT != 'true'
+        run: $COMPOSE up -d --build
+
+      # README step 4. The entrypoint runs `bin/rails db:prepare` (all three
+      # databases) before the server starts listening, so the first 200 from
+      # /up means the databases are ready. Do NOT run db:prepare by hand here:
+      # on a fresh volume it races the entrypoint and fails with
+      # "table already exists".
+      #
+      # The request is plain http with no X-Forwarded-Proto header, exactly
+      # what the README promises returns 200. The app runs with force_ssl, but
+      # assume_ssl marks every request as HTTPS first, so no redirect is issued.
+      - name: Wait until the app is up
+        run: |
+          for i in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Status}}' "$($COMPOSE ps -q app)" 2>/dev/null || true)"
+            code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost/up || true)"
+            if [ "$code" = "200" ]; then
+              echo "GET http://localhost/up -> HTTP 200 after ~$((i * 2))s"
+              curl -sSI http://localhost/up
+              exit 0
+            fi
+            if [ "$status" = "exited" ] || [ "$status" = "dead" ]; then
+              echo "::error::container stopped (status: $status)"
+              exit 1
+            fi
+            echo "waiting... (container: ${status:-absent}, /up: ${code:-no response})"
+            sleep 2
+          done
+          echo "::error::/up did not return 200 within 120s (container: ${status:-absent}, last /up: $code)"
+          exit 1
+
+      # The entrypoint's db:prepare must have created the primary, cache and
+      # queue databases without any manual command.
+      - name: Check the databases were prepared
+        run: |
+          docker compose -f docker-compose.prod.yaml exec app bin/rails runner '
+            missing = []
+            missing << "users (primary)" unless ActiveRecord::Base.connection.table_exists?(:users)
+            missing << "solid_cache_entries (cache)" unless SolidCache::Entry.table_exists?
+            missing << "solid_queue_jobs (queue)" unless SolidQueue::Job.table_exists?
+            abort "missing tables: #{missing.join(", ")}" if missing.any?
+            puts "primary, cache and queue databases are prepared"
+          '
+
+      # README health check, stated the way the README does.
+      - name: Health check
+        run: |
+          code="$(curl -sS -o /dev/null -w '%{http_code}' --retry 10 --retry-delay 3 --retry-all-errors http://localhost/up)"
+          echo "GET http://localhost/up -> HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::expected HTTP 200 from /up, got $code"
+            exit 1
+          fi
+
+      - name: Show container logs
+        if: failure()
+        run: |
+          $COMPOSE ps -a || true
+          $COMPOSE logs || true
+
+      - name: Tear down
+        if: always()
+        run: $COMPOSE down -v --remove-orphans || true
