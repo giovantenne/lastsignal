@@ -94,19 +94,17 @@ openssl rand -hex 64   # -> SECRET_KEY_BASE
 # 3) Start the stack (pulls the prebuilt image)
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d
 
-# 4) Prepare the databases (first run only)
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=cache
-docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=queue
+# 4) Wait until it is up (the container prepares the databases on first start)
+curl -fsS http://YOUR_SERVER/up
 
-# 5) Check it is up
+# 5) Follow the logs
 docker compose -f docker-compose.prod.yaml logs -f
 ```
 
 Health check: `http://YOUR_SERVER/up` should return `200`.
 
 - The app listens on port 80 without TLS: put a reverse proxy with HTTPS (Caddy, nginx, Traefik) in front of it, see the [compose guide](docs/deploy-docker-compose.md#reverse-proxy-ssltls).
-- The prebuilt image is `linux/amd64` only; on other architectures (e.g. arm64) add `--build` to the `up` command to build locally from source instead.
+- The prebuilt image is published for `linux/amd64` and `linux/arm64` (Raspberry Pi 4/5 with a 64-bit OS, Apple Silicon hosts); `--build` on the `up` command is only needed on other architectures or to run a patched checkout.
 - `latest` is the most recent release (also tagged `X.Y.Z` and `X.Y`); `edge` tracks every push to `master`.
 - Updates, backups and the email deliverability checklist are in the [compose guide](docs/deploy-docker-compose.md).
 
