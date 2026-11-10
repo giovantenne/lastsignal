@@ -67,223 +67,46 @@ If the trusted contact confirms on May 16:
 
 **Recipient-specific delay**: You can also set a delay (in days) per recipient. This delays when the recipient can decrypt the message after delivery—useful for staggered access or time-sensitive information.
 
-## 🧪 Development
+## 🚀 Self-host in 5 minutes
 
-This runs a local dev stack and opens emails in your browser using [letter_opener](https://github.com/ryanb/letter_opener).
-
-### Requirements
-
-- Ruby 3.4+
-- SQLite 3 (sqlite3 gem >= 2.1)
-- Node.js (for Tailwind)
-
-Example for a fresh Ubuntu install:
+The recommended way to run LastSignal is docker-compose with the prebuilt image `ghcr.io/giovantenne/lastsignal:latest`, which `docker-compose.prod.yaml` already references. You need a Linux host with Docker, a domain pointing at it, and a reliable SMTP provider.
 
 ```bash
-apt-get update && apt-get install -y \
-  git \
-  ruby \
-  bundler \
-  libyaml-dev
-```
-
-### Run the stack
-
-```bash
+# 1) Get the files (only docker-compose.prod.yaml and .env.production.example
+#    are strictly needed; a full checkout also lets you build from source)
 git clone https://github.com/giovantenne/lastsignal.git
 cd lastsignal
-bundle install
-cp .env.example .env
-bin/setup
-bin/dev
-```
 
-Then open http://localhost:3000 and request a magic link. 
-The email opens in your browser automatically via `letter_opener`.
-
-### Docker (Quick trial with Mailhog)
-
-If you want to try the app without installing Ruby locally, use the dev compose stack with [Mailhog](https://github.com/mailhog/MailHog):
-
-```bash
-docker compose -f docker-compose.dev.yaml up --build
-```
-
-Then open:
-
-- App: http://localhost:3000
-- Mailhog inbox: http://localhost:8025
-
-### E2EE demo flow (Dev / Docker)
-
-This lets you test the full check-in -> delivery flow quickly, without waiting days.
-
-Prereqs:
-
-1) Start the stack.
-2) Log in, add a recipient, accept the invite with a passphrase, and create a message for that recipient.
-   Check-ins are skipped unless there is at least one message linked to an accepted recipient.
-Dev commands:
-
-```bash
-bin/rails demo:checkins:status EMAIL=you@example.com
-bin/rails demo:checkins:advance EMAIL=you@example.com
-bin/rails demo:checkins:advance_days EMAIL=you@example.com DAYS=7
-bin/rails demo:checkins:deliver EMAIL=you@example.com`
-```
-
-Docker commands:
-
-```bash
-docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:status EMAIL=you@example.com
-docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:advance EMAIL=you@example.com
-docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:advance_days EMAIL=you@example.com DAYS=7
-docker compose -f docker-compose.dev.yaml exec app bin/rails demo:checkins:deliver EMAIL=you@example.com
-```
-
-Notes:
-
-- Each `advance` sends the next email in the sequence (reminder -> grace -> cooldown -> delivery).
-- `advance_days` simulates time passing by N days and runs the check-in job.
-- To skip straight to delivery: `bin/rails demo:checkins:deliver EMAIL=you@example.com`
-- Emails open in letter_opener (Dev) or Mailhog (Docker).
-- Demo helpers only run in development/test.
-
-### Tests
-
-```bash
-# Full suite
-bin/test
-
-# Targeted specs
-bin/test spec/models/user_spec.rb
-bin/test spec/jobs/process_checkins_job_spec.rb
-bin/test spec/requests/auth_spec.rb
-```
-
-## 🚀 Production Deployment (Kamal)
-
-You only need Docker, SSH access, and a reliable SMTP provider.
-
-Kamal docs: https://kamal-deploy.org
-
-### 1) Prepare the server
-
-- Provision a Linux host (Ubuntu 22.04+ recommended)
-- Install Docker and open ports 80/443
-- Point DNS to the server IP (A/AAAA records)
-
-### 2) Configure environment
-
-Copy the template and fill in the required values:
-
-```bash
+# 2) Configure (you can ignore the KAMAL_* variables)
 cp .env.production.example .env.production
-```
+openssl rand -hex 32   # -> RAILS_MASTER_KEY
+openssl rand -hex 64   # -> SECRET_KEY_BASE
+# Edit .env.production: paste the two secrets, then set APP_BASE_URL, APP_HOST and SMTP_*
 
-You must set:
+# 3) Start the stack (pulls the prebuilt image)
+docker compose -f docker-compose.prod.yaml --env-file .env.production up -d
 
-- `KAMAL_*` (image, registry, server, domain)
-- `APP_BASE_URL` and `APP_HOST`
-- `SMTP_*` (your provider credentials)
-- `ALLOWED_EMAILS` (optional allowlist for private instances)
-
-Generate `RAILS_MASTER_KEY` and `SECRET_KEY_BASE` with `openssl` (no Rails install needed; the repo ships no `config/credentials.yml.enc`, so any random value works):
-
-```bash
-openssl rand -hex 32   # RAILS_MASTER_KEY
-openssl rand -hex 64   # SECRET_KEY_BASE
-```
-
-### 3) Deploy
-
-```bash
-bin/kamal setup
-bin/kamal deploy
-```
-
-### 4) Prepare the databases
-
-```bash
-bin/kamal app exec --interactive --reuse "bin/rails db:prepare"
-bin/kamal app exec --interactive --reuse "bin/rails db:prepare DATABASE=cache"
-bin/kamal app exec --interactive --reuse "bin/rails db:prepare DATABASE=queue"
-```
-
-### 5) Verify
-
-```bash
-bin/kamal logs
-```
-
-Health check: `https://YOUR_DOMAIN/up`
-
-## 🐳 Production Deployment (docker-compose)
-
-If you prefer not to use Kamal, you can deploy with docker-compose using the provided `docker-compose.prod.yaml`.
-
-A prebuilt `linux/amd64` image is published to `ghcr.io/giovantenne/lastsignal`. The `latest` tag always points at the most recent release (also available as `X.Y.Z` and `X.Y`), while `edge` tracks every push to `master`. `docker-compose.prod.yaml` references `latest`, so you can drop `--build` from the command below to use the prebuilt image instead of building locally, and update later with `docker compose -f docker-compose.prod.yaml pull && docker compose -f docker-compose.prod.yaml up -d`.
-
-```bash
-# Copy and configure environment
-cp .env.production.example .env.production
-# Edit .env.production with your values (you can ignore KAMAL_* variables)
-# Generate the two secrets without a Rails install:
-#   openssl rand -hex 32   # RAILS_MASTER_KEY
-#   openssl rand -hex 64   # SECRET_KEY_BASE
-
-# Start the stack
-docker compose -f docker-compose.prod.yaml --env-file .env.production up -d --build
-
-# Prepare databases (first run only)
+# 4) Prepare the databases (first run only)
 docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare
 docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=cache
 docker compose -f docker-compose.prod.yaml exec app bin/rails db:prepare DATABASE=queue
 
-# View logs
+# 5) Check it is up
 docker compose -f docker-compose.prod.yaml logs -f
 ```
 
-### Reverse Proxy (SSL/TLS)
+Health check: `http://YOUR_SERVER/up` should return `200`.
 
-For production, place a reverse proxy (nginx, Caddy, Traefik) in front of the app to handle HTTPS. Example with Caddy:
+- The app listens on port 80 without TLS: put a reverse proxy with HTTPS (Caddy, nginx, Traefik) in front of it, see the [compose guide](docs/deploy-docker-compose.md#reverse-proxy-ssltls).
+- The prebuilt image is `linux/amd64` only; on other architectures (e.g. arm64) add `--build` to the `up` command to build locally from source instead.
+- `latest` is the most recent release (also tagged `X.Y.Z` and `X.Y`); `edge` tracks every push to `master`.
+- Updates, backups and the email deliverability checklist are in the [compose guide](docs/deploy-docker-compose.md).
 
-```
-yourdomain.com {
-    reverse_proxy localhost:80
-}
-```
+## 🧭 Other ways to run it
 
-Caddy automatically provisions Let's Encrypt certificates.
-
-## 📮 Email Deliverability Checklist
-
-Email delivery is mission-critical for LastSignal. If your SMTP setup is misconfigured, messages may never arrive.
-
-Most transactional email providers (such as Postmark, SendGrid, or similar services) guide you through this process and provide the required DNS records and configuration details.
-
-- **SPF**: authorize your SMTP provider to send on your domain
-- **DKIM**: enable DKIM signing and add the DNS record
-- **DMARC**: start with `p=none`, then tighten to `quarantine` or `reject`
-- **From address**: use a domain you control (matches `SMTP_FROM_EMAIL`)
-
-## 💾 Storage Backups
-
-The default deployment stores the SQLite database and Active Storage files in the Docker volume `lastsignal_storage`. Back it up regularly.
-
-Backup:
-
-```bash
-docker run --rm -v lastsignal_storage:/data -v "$PWD":/backup alpine \
-  sh -c "cd /data && tar -czf /backup/lastsignal_storage.tgz ."
-```
-
-Restore:
-
-```bash
-docker run --rm -v lastsignal_storage:/data -v "$PWD":/backup alpine \
-  sh -c "cd /data && tar -xzf /backup/lastsignal_storage.tgz"
-```
+- **[Kamal](docs/deploy-kamal.md)**: build and deploy over SSH with Kamal's own TLS proxy, using `config/deploy.yml`.
+- **[docker-compose in depth](docs/deploy-docker-compose.md)**: reverse proxy, updating, building from source, email deliverability, storage backups.
+- **[Development](docs/development.md)**: local stack with letter_opener, Docker quick trial with Mailhog, the E2EE demo flow and the test suite.
 
 ## ⚙️ Defaults
 
