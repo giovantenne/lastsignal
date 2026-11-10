@@ -126,6 +126,20 @@ class Rack::Attack
     end
   end
 
+  # Throttle delivered-state reset by IP (recovery code brute force target)
+  throttle("reset_after_delivery/ip", limit: 5, period: 300) do |req|
+    if req.path == "/account/reset_after_delivery" && req.post?
+      req.ip
+    end
+  end
+
+  # Throttle account deletion by IP (requires recovery code while delivered)
+  throttle("account_destroy/ip", limit: 5, period: 300) do |req|
+    if req.path == "/account" && (req.delete? || req.post?)
+      req.ip
+    end
+  end
+
   # Throttle emergency stop form by IP
   throttle("emergency_form/ip", limit: 20, period: 60) do |req|
     if req.path == "/emergency" && req.get?

@@ -1,0 +1,19 @@
+Your account was reset to active
+<%= "=" * 40 %>
+
+Your <%= @app_name %> account was reset to active after delivery using your recovery code.
+
+All delivery links previously sent to your recipients have been revoked and a new check-in cycle has started.
+<% if @next_checkin_at %>
+Next check-in due: <%= @next_checkin_at.strftime("%B %d, %Y at %H:%M UTC") %>
+<% end %>
+
+If this wasn't you: someone had access to both your email and your recovery code.
+Sign in, review your audit log, generate a new recovery code from Account Settings
+and consider deleting your account.
+
+<%= @login_url %>
+
+---
+
+This is an automated message from <%= @app_name %>.
