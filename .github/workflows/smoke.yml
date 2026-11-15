@@ -158,12 +158,12 @@ jobs:
 
       # /up is excluded from host authorization, so also request a real page:
       # this fails with 403 if the host derived from APP_BASE_URL is wrong.
-      - name: Login page answers for the configured host
+      - name: Login page (/) answers for the configured host
         run: |
-          code="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/login)"
-          echo "GET http://localhost/login -> HTTP $code"
+          code="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/)"
+          echo "GET http://localhost/ -> HTTP $code"
           if [ "$code" != "200" ]; then
-            echo "::error::expected HTTP 200 from /login, got $code (host authorization?)"
+            echo "::error::expected HTTP 200 from /, got $code (host authorization?)"
             exit 1
           fi
 
