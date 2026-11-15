@@ -21,7 +21,7 @@ services:
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       APP_BASE_URL: ${APP_BASE_URL}
-      APP_HOST: ${APP_HOST}
+      APP_HOST: ${APP_HOST:-}  # optional hostname override, see .env.production.example
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}

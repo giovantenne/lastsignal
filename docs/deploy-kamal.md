@@ -25,7 +25,7 @@ cp .env.production.example .env.production
 You must set:
 
 - `KAMAL_*` (image, registry, server, domain)
-- `APP_BASE_URL` and `APP_HOST`
+- `APP_BASE_URL` (public URL with protocol; the hostname is derived from it)
 - `SMTP_*` (your provider credentials)
 - `ALLOWED_EMAILS` (optional allowlist for private instances)
 

@@ -75,9 +75,8 @@ jobs:
             -e "s|^RAILS_MASTER_KEY=.*|RAILS_MASTER_KEY=$(openssl rand -hex 32)|" \
             -e "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=$(openssl rand -hex 64)|" \
             -e "s|^APP_BASE_URL=.*|APP_BASE_URL=http://localhost|" \
-            -e "s|^APP_HOST=.*|APP_HOST=localhost|" \
             .env.production
-          grep -E '^(APP_BASE_URL|APP_HOST|SMTP_HOST|SMTP_PORT)=' .env.production
+          grep -E '^(APP_BASE_URL|SMTP_HOST|SMTP_PORT)=' .env.production
 
       - name: Pull the published image
         if: env.PREBUILT == 'true'
@@ -154,6 +153,17 @@ jobs:
           echo "GET http://localhost/up -> HTTP $code"
           if [ "$code" != "200" ]; then
             echo "::error::expected HTTP 200 from /up, got $code"
+            exit 1
+          fi
+
+      # /up is excluded from host authorization, so also request a real page:
+      # this fails with 403 if the host derived from APP_BASE_URL is wrong.
+      - name: Login page answers for the configured host
+        run: |
+          code="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/login)"
+          echo "GET http://localhost/login -> HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::expected HTTP 200 from /login, got $code (host authorization?)"
             exit 1
           fi
 

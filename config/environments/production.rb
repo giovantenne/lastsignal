@@ -61,8 +61,17 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
+  # Public address of this instance. APP_BASE_URL is the single source of truth
+  # (scheme, host and optional port); APP_HOST only overrides the host part,
+  # kept for installations configured before APP_BASE_URL was enough.
+  app_base_url = URI.parse(ENV.fetch("APP_BASE_URL", "https://localhost"))
+  app_host = ENV["APP_HOST"].presence || app_base_url.host || "localhost"
+
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost"), protocol: "https" }
+  config.action_mailer.default_url_options = { host: app_host, protocol: app_base_url.scheme }
+  if app_base_url.port && app_base_url.port != app_base_url.default_port
+    config.action_mailer.default_url_options[:port] = app_base_url.port
+  end
 
   # Specify outgoing SMTP server via environment variables
   config.action_mailer.smtp_settings = {
@@ -91,8 +100,8 @@ Rails.application.configure do
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   config.hosts = [
-    ENV.fetch("APP_HOST", "localhost"),
-    /.*\.#{Regexp.escape(ENV.fetch("APP_HOST", "localhost"))}/  # Allow subdomains
+    app_host,
+    /.*\.#{Regexp.escape(app_host)}/  # Allow subdomains
   ]
 
   # Skip DNS rebinding protection for the default health check endpoint.
