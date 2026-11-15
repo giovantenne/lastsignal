@@ -33,7 +33,7 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: <%= ENV.fetch("KAMAL_PROXY_HOST", ENV.fetch("APP_HOST")) %>
+  host: <%= ENV.fetch("KAMAL_PROXY_HOST") { ENV["APP_HOST"].to_s.empty? ? URI.parse(ENV.fetch("APP_BASE_URL")).host : ENV["APP_HOST"] } %>
 
 # Credentials for your image host.
 registry:
@@ -76,7 +76,9 @@ env:
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
     APP_BASE_URL: "<%= ENV.fetch("APP_BASE_URL") %>"
-    APP_HOST: "<%= ENV.fetch("APP_HOST") %>"
+<% unless ENV["APP_HOST"].to_s.empty? %>
+    APP_HOST: "<%= ENV["APP_HOST"] %>"
+<% end %>
     ALLOWED_EMAILS: "<%= ENV.fetch("ALLOWED_EMAILS", "") %>"
     PROCESS_CHECKINS_INTERVAL_MINUTES: "<%= ENV.fetch("PROCESS_CHECKINS_INTERVAL_MINUTES", "60") %>"
 

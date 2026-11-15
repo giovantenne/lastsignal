@@ -89,7 +89,7 @@ cd lastsignal
 cp .env.production.example .env.production
 openssl rand -hex 32   # -> RAILS_MASTER_KEY
 openssl rand -hex 64   # -> SECRET_KEY_BASE
-# Edit .env.production: paste the two secrets, then set APP_BASE_URL, APP_HOST and SMTP_*
+# Edit .env.production: paste the two secrets, then set APP_BASE_URL and SMTP_*
 
 # 3) Start the stack (pulls the prebuilt image)
 docker compose -f docker-compose.prod.yaml --env-file .env.production up -d

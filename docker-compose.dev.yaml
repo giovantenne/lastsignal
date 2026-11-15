@@ -14,7 +14,6 @@ services:
     environment:
       - RAILS_ENV=development
       - APP_BASE_URL=http://localhost:3000
-      - APP_HOST=localhost
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
     depends_on:
