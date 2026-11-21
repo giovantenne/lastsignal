@@ -80,10 +80,9 @@ class InvitesController < ApplicationController
       return
     end
 
-    begin
-      # Parse kdf_params if it's a string
-      kdf_params = JSON.parse(kdf_params) if kdf_params.is_a?(String)
-    rescue JSON::ParserError
+    kdf_params = normalize_kdf_params(kdf_params)
+
+    if kdf_params.nil?
       render json: { error: "Invalid key derivation parameters." }, status: :unprocessable_entity
       return
     end
@@ -145,6 +144,21 @@ class InvitesController < ApplicationController
     return false unless digest.bytesize == current_digest.bytesize
 
     ActiveSupport::SecurityUtils.secure_compare(digest, current_digest)
+  end
+
+  # The invite page posts JSON, so kdf_params arrives as nested parameters;
+  # a JSON string is accepted too. Anything that is not an object is rejected
+  # here, the values themselves are validated by RecipientKey.
+  def normalize_kdf_params(raw)
+    parsed =
+      case raw
+      when ActionController::Parameters then raw.to_unsafe_h
+      when String then JSON.parse(raw)
+      end
+
+    parsed if parsed.is_a?(Hash)
+  rescue JSON::ParserError
+    nil
   end
 
   def generate_kdf_salt
