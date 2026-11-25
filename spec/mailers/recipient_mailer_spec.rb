@@ -26,6 +26,30 @@ RSpec.describe RecipientMailer, type: :mailer do
     end
   end
 
+  describe "privacy policy link" do
+    let(:user) { create(:user, email: "sender@example.com") }
+    let(:recipient) { create(:recipient, user: user, email: "recipient@example.com") }
+    let(:mail) { described_class.invite(recipient, SecureRandom.urlsafe_base64(32)) }
+
+    it "is omitted when PRIVACY_POLICY_URL is unset" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("PRIVACY_POLICY_URL").and_return(nil)
+      expect(mail.body.encoded).not_to include("Privacy policy")
+    end
+
+    it "is included when PRIVACY_POLICY_URL is an http(s) URL" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("PRIVACY_POLICY_URL").and_return("https://example.com/privacy")
+      expect(mail.body.encoded).to include("https://example.com/privacy")
+    end
+
+    it "ignores other schemes" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("PRIVACY_POLICY_URL").and_return("javascript:alert(1)")
+      expect(mail.body.encoded).not_to include("Privacy policy")
+    end
+  end
+
   describe "#delivery" do
     let(:user) { create(:user, email: "sender@example.com") }
     let(:recipient) { create(:recipient, :accepted, user: user, email: "recipient@example.com") }

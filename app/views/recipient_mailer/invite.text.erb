@@ -27,3 +27,7 @@ SECURITY NOTICE
 ---
 
 This is an automated message from <%= @app_name %>. Please do not reply to this email.
+<% if AppConfig.privacy_policy_url %>
+
+Privacy policy: <%= AppConfig.privacy_policy_url %>
+<% end %>

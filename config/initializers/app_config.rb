@@ -42,6 +42,13 @@ module AppConfig
       ENV.fetch("APP_BASE_URL", "http://localhost:3000")
     end
 
+    # Optional link to a privacy policy, shown in the footer of mails to
+    # recipients. Only http(s) URLs are used; nothing is shown when unset.
+    def privacy_policy_url
+      url = ENV["PRIVACY_POLICY_URL"].to_s.strip
+      url if url.match?(%r{\Ahttps?://}i)
+    end
+
     # SMTP
     def smtp_host
       ENV.fetch("SMTP_HOST", "localhost")
