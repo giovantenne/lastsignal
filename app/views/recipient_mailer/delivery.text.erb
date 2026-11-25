@@ -33,3 +33,7 @@ To decrypt and read <%= @total_count > 1 ? 'these messages' : 'this message' %>,
 This is an automated message from <%= @app_name %>. Please do not reply to this email.
 
 This link will remain active so you can access your message<%= 's' if @total_count > 1 %> at any time.
+<% if AppConfig.privacy_policy_url %>
+
+Privacy policy: <%= AppConfig.privacy_policy_url %>
+<% end %>

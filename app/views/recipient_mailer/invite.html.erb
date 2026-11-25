@@ -91,6 +91,9 @@
   </div>
 
   <div class="footer">
+    <% if AppConfig.privacy_policy_url %>
+      <p><a href="<%= AppConfig.privacy_policy_url %>">Privacy policy</a></p>
+    <% end %>
     <p>This is an automated message from <%= @app_name %>. Please do not reply to this email.</p>
   </div>
 </body>
